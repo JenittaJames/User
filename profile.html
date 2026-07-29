@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — Profile</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --danger: #EF4444;
+      --success: #22C55E;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar {
+      width: 260px; min-width: 260px;
+      transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label,
+    #sidebar.collapsed .sidebar-logo-text,
+    #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-size: 14px; font-weight: 500; color: var(--text-muted);
+      text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04);
+    }
+    
+    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; cursor: pointer;}
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; cursor: pointer; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+    
+    /* Forms */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .form-input, .form-select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; color: var(--text); outline: none; transition: all 0.2s; background: #fff; }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .form-input[disabled] { background: #F8FAFC; color: var(--text-muted); cursor: not-allowed; }
+
+    /* Toggles */
+    .toggle { position: relative; width: 44px; height: 24px; background: #E2E8F0; border-radius: 24px; cursor: pointer; transition: 0.3s; }
+    .toggle.active { background: var(--success); }
+    .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .toggle.active::after { transform: translateX(20px); }
+
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 20px; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item active"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">Profile Settings</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">Profile</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1"></div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#2563EB;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll">
+    <div class="mx-auto px-6 py-8" style="max-width:1000px;">
+      
+      <!-- Profile Header -->
+      <div class="card p-6 mb-6 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden">
+        <!-- Abstract Background Detail -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-bl-full pointer-events-none -z-10"></div>
+        
+        <div class="relative">
+          <img src="https://i.pravatar.cc/150?img=47" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md z-10 relative" alt="Sarah Jenkins" />
+          <button class="absolute bottom-0 right-0 w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:text-blue-600 transition-colors z-20">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="flex-1 text-center md:text-left z-10">
+          <h2 class="text-2xl font-bold text-slate-900 mb-1">Sarah Jenkins</h2>
+          <p class="text-sm text-slate-500 mb-4">Senior UI/UX Designer • Design Department</p>
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3">
+            <span class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> HQ Tower
+            </span>
+            <span class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+              <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i> s.jenkins@facilityops.ai
+            </span>
+          </div>
+        </div>
+        <div class="flex-shrink-0 z-10">
+          <button class="btn-primary" onclick="alert('Profile Saved Successfully!')"><i data-lucide="save" class="w-4 h-4"></i> Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Main Layout -->
+      <div class="flex flex-col lg:flex-row gap-6">
+        
+        <!-- Left Column (Settings) -->
+        <div class="flex-1 flex flex-col gap-6">
+          
+          <!-- Personal Info -->
+          <div class="card p-6">
+            <h3 class="text-base font-bold text-slate-900 mb-4">Personal Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" class="form-input" value="Sarah" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" class="form-input" value="Jenkins" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address (Read-only)</label>
+                <input type="email" class="form-input" value="s.jenkins@facilityops.ai" disabled />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-input" value="+1 (555) 123-4567" />
+              </div>
+              <div class="form-group md:col-span-2">
+                <label class="form-label">Role Title</label>
+                <input type="text" class="form-input" value="Senior UI/UX Designer" disabled />
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences -->
+          <div class="card p-6">
+            <h3 class="text-base font-bold text-slate-900 mb-4">Workspace Preferences</h3>
+            <p class="text-sm text-slate-500 mb-5">These preferences will be used by the AI Assistant to recommend workspaces to you.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group mb-0">
+                <label class="form-label">Default Building</label>
+                <select class="form-select">
+                  <option selected>HQ Tower</option>
+                  <option>Innovation Hub</option>
+                  <option>Research Wing</option>
+                </select>
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Preferred Zone</label>
+                <select class="form-select">
+                  <option>Creative Zone</option>
+                  <option selected>Quiet Zone</option>
+                  <option>Collaboration Zone</option>
+                </select>
+              </div>
+              <div class="form-group md:col-span-2 mt-2">
+                <label class="form-label mb-3">Required Amenities</label>
+                <div class="flex flex-wrap gap-4">
+                  <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" checked /> Dual Monitors
+                  </label>
+                  <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" checked /> Standing Desk
+                  </label>
+                  <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" /> Natural Light
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="w-full lg:w-80 flex flex-col gap-6">
+          
+          <!-- Notifications -->
+          <div class="card p-6">
+            <h3 class="text-base font-bold text-slate-900 mb-5">Notifications</h3>
+            
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+              <div>
+                <p class="text-sm font-semibold text-slate-900">Email Alerts</p>
+                <p class="text-xs text-slate-500 mt-0.5">Booking confirmations</p>
+              </div>
+              <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+              <div>
+                <p class="text-sm font-semibold text-slate-900">Push Notifications</p>
+                <p class="text-xs text-slate-500 mt-0.5">Desktop alerts</p>
+              </div>
+              <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            
+            <div class="flex items-center justify-between py-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-900">AI Suggestions</p>
+                <p class="text-xs text-slate-500 mt-0.5">Daily recommendations</p>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('active')"></div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="card p-6">
+            <h3 class="text-base font-bold text-slate-900 mb-4">Security</h3>
+            <button class="btn-secondary w-full justify-center mb-3"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
+            <button class="btn-secondary w-full justify-center text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"><i data-lucide="smartphone" class="w-4 h-4"></i> Set up 2FA</button>
+          </div>
+          
+        </div>
+      </div>
+      
+    </div>
+  </main>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>

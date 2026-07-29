@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — My Assets</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --secondary: #14B8A6;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar { width: 260px; min-width: 260px; transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1); }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label, #sidebar.collapsed .sidebar-logo-text, #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04); transition: box-shadow 0.2s, transform 0.2s; }
+    .card:hover { box-shadow: 0 4px 16px 0 rgba(15,23,42,.08); }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px 0 rgba(37,99,235,.08); border-color: #BFDBFE; }
+    
+    .asset-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.2s; }
+    .asset-card:hover { border-color: var(--primary); box-shadow: 0 10px 25px -5px rgba(37,99,235,0.1), 0 8px 10px -6px rgba(37,99,235,0.1); transform: translateY(-3px); }
+    .asset-img { height: 160px; background: #F1F5F9; display: flex; align-items: center; justify-content: center; position: relative; }
+    .asset-img img { width: 100%; height: 100%; object-fit: contain; padding: 16px; }
+
+    /* Tabs */
+    .tab-btn { padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.15s; cursor: pointer; white-space: nowrap; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #DCFCE7; color: #15803D; }
+    .badge-warning { background: #FEF9C3; color: #A16207; }
+    .badge-danger  { background: #FEE2E2; color: #B91C1C; }
+    .badge-info    { background: #DBEAFE; color: #1D4ED8; }
+    .badge-neutral { background: #F1F5F9; color: #475569; }
+
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+    .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .btn-outline:hover { background: #EFF6FF; }
+
+    /* Utilities */
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 80px; }
+    .chart-container { position: relative; height: 200px; width: 100%; }
+
+    /* Slide-over Drawer */
+    #drawer { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #drawer.open { transform: translateX(0); }
+    #drawer-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s; background: rgba(15,23,42,0.4); backdrop-filter: blur(2px); z-index: 60; }
+    #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+    /* Modals */
+    .modal-container { opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 80; }
+    .modal-container.open { opacity: 1; pointer-events: auto; }
+    .modal-content { transform: scale(0.95); transition: transform 0.2s; }
+    .modal-container.open .modal-content { transform: scale(1); }
+
+    /* Wizard Steps */
+    .wizard-step { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; flex: 1; }
+    .wizard-step::before { content: ''; position: absolute; top: 12px; left: -50%; width: 100%; height: 2px; background: #E2E8F0; z-index: 0; }
+    .wizard-step:first-child::before { display: none; }
+    .wizard-step.completed::before { background: var(--primary); }
+    .step-circle { width: 24px; height: 24px; border-radius: 50%; background: #F1F5F9; border: 2px solid #CBD5E1; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; z-index: 1; position: relative; }
+    .wizard-step.active .step-circle { background: #EFF6FF; border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 4px #EFF6FF; }
+    .wizard-step.completed .step-circle { background: var(--primary); border-color: var(--primary); color: white; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <!-- Nav -->
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item active"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">My Assets</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">My Assets</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex justify-center px-4">
+      <div class="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-sm text-slate-900 w-full" />
+        <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">K</kbd>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="sun" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#64748B;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll" class="flex-1 overflow-y-auto">
+    <div class="mx-auto px-6 py-6" style="max-width:1440px;">
+      
+      <!-- HEADER SECTION -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold mb-1" style="color:#0F172A;">My Assets</h2>
+          <p class="text-sm" style="color:#64748B;">Manage your assigned workplace assets, submit requests and track returns.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-outline"><i data-lucide="download" class="w-4 h-4"></i> Export Asset History</button>
+          <button class="btn-secondary"><i data-lucide="arrow-left-right" class="w-4 h-4"></i> Return Asset</button>
+          <button class="btn-primary" onclick="openModal('request-asset-modal')"><i data-lucide="plus" class="w-4 h-4"></i> Request Asset</button>
+        </div>
+      </div>
+
+      <!-- 6 KPI SUMMARY CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#2563EB;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Assigned Assets</p>
+          <p class="text-2xl font-bold text-slate-900">4</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#14B8A6;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Pending Requests</p>
+          <p class="text-2xl font-bold text-slate-900">1</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#F59E0B;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Due for Return</p>
+          <p class="text-2xl font-bold text-slate-900">0</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#EF4444;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Under Repair</p>
+          <p class="text-2xl font-bold text-slate-900">0</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#9333EA;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Returned Assets</p>
+          <p class="text-2xl font-bold text-slate-900">2</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#22C55E;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Asset Health Score</p>
+          <p class="text-2xl font-bold text-slate-900">100%</p>
+        </div>
+      </div>
+
+      <!-- MAIN 70/30 SPLIT -->
+      <div class="flex flex-col lg:flex-row gap-6 mb-8">
+        
+        <!-- LEFT COLUMN (Tabs, Filters & Grid) -->
+        <div class="flex flex-col gap-6 lg:w-[72%]">
+          
+          <div class="card overflow-hidden">
+            <!-- TAB NAVIGATION -->
+            <div class="flex overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 pt-2">
+              <button class="tab-btn active">Assigned Assets</button>
+              <button class="tab-btn">Asset Requests</button>
+              <button class="tab-btn">Return Requests</button>
+              <button class="tab-btn">Asset History</button>
+              <button class="tab-btn">Favorites</button>
+            </div>
+            
+            <div class="p-5 bg-white">
+              <!-- FILTER BAR -->
+              <div class="flex flex-wrap items-center gap-3 mb-6">
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex-1 min-w-[200px]">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                  <input type="text" placeholder="Search Asset..." class="text-sm outline-none bg-transparent w-full" />
+                </div>
+                <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                  <option>Category: All</option>
+                  <option>Laptops</option>
+                  <option>Monitors</option>
+                  <option>Accessories</option>
+                </select>
+                <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                  <option>Status: Active</option>
+                  <option>Under Repair</option>
+                  <option>Pending Return</option>
+                </select>
+                <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                  <option>Condition: All</option>
+                  <option>Excellent</option>
+                  <option>Good</option>
+                  <option>Fair</option>
+                  <option>Needs Repair</option>
+                </select>
+                <input type="date" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white text-slate-500" title="Assigned Date" />
+                <button class="text-xs font-semibold text-blue-600 hover:underline px-2">Reset Filters</button>
+              </div>
+
+              <!-- ASSIGNED ASSETS GRID -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
+                
+                <!-- Asset Card 1 -->
+                <div class="asset-card">
+                  <div class="asset-img relative">
+                    <div class="absolute top-3 left-3 flex gap-2">
+                      <span class="badge badge-success text-[10px]">Active</span>
+                      <span class="badge badge-info bg-blue-100 text-blue-700 text-[10px]">Excellent</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500&auto=format&fit=crop&q=80" alt="MacBook Pro" />
+                  </div>
+                  <div class="p-4 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-1">
+                      <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Laptop</span>
+                        <h3 class="text-base font-bold text-slate-900 mt-0.5">MacBook Pro 14"</h3>
+                      </div>
+                      <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded">AST-10492</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Apple • M2 Pro • SN: C02Y82F4LVD</p>
+                    <div class="bg-slate-50 rounded border border-slate-100 p-2 mb-4">
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Assigned Date</span><span class="font-semibold text-slate-900">Jan 12, 2024</span>
+                      </div>
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Expected Return</span><span class="font-semibold text-slate-900">Jan 12, 2027</span>
+                      </div>
+                      <div class="flex justify-between text-[11px]">
+                        <span class="text-slate-500">Warranty</span><span class="font-semibold text-green-600">Active (18m left)</span>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-auto">
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-slate-700 bg-slate-50 border-slate-200" onclick="openDrawer()">Details</button>
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-blue-600 border-blue-200">Return</button>
+                      <button class="btn-secondary px-2 border-slate-200" onclick="openModal('report-damage-modal')" title="Report Damage"><i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500"></i></button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Asset Card 2 -->
+                <div class="asset-card">
+                  <div class="asset-img relative">
+                    <div class="absolute top-3 left-3 flex gap-2">
+                      <span class="badge badge-success text-[10px]">Active</span>
+                      <span class="badge badge-neutral text-[10px]">Good</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1527443195645-1133f7f28990?w=500&auto=format&fit=crop&q=80" alt="Dell Monitor" />
+                  </div>
+                  <div class="p-4 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-1">
+                      <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Monitor</span>
+                        <h3 class="text-base font-bold text-slate-900 mt-0.5">Dell UltraSharp 27"</h3>
+                      </div>
+                      <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded">AST-22105</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Dell • U2723QE • SN: CN-0W8D4M</p>
+                    <div class="bg-slate-50 rounded border border-slate-100 p-2 mb-4">
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Assigned Date</span><span class="font-semibold text-slate-900">Feb 05, 2024</span>
+                      </div>
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Expected Return</span><span class="font-semibold text-slate-900">Feb 05, 2028</span>
+                      </div>
+                      <div class="flex justify-between text-[11px]">
+                        <span class="text-slate-500">Warranty</span><span class="font-semibold text-green-600">Active (30m left)</span>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-auto">
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-slate-700 bg-slate-50 border-slate-200" onclick="openDrawer()">Details</button>
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-blue-600 border-blue-200">Return</button>
+                      <button class="btn-secondary px-2 border-slate-200" onclick="openModal('report-damage-modal')" title="Report Damage"><i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500"></i></button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Asset Card 3 -->
+                <div class="asset-card">
+                  <div class="asset-img relative bg-white border-b border-slate-100 p-4">
+                    <div class="absolute top-3 left-3 flex gap-2">
+                      <span class="badge badge-warning text-[10px]">Under Repair</span>
+                      <span class="badge badge-danger text-[10px]">Needs Repair</span>
+                    </div>
+                    <i data-lucide="headphones" class="w-20 h-20 text-slate-300"></i>
+                  </div>
+                  <div class="p-4 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-1">
+                      <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Accessory</span>
+                        <h3 class="text-base font-bold text-slate-900 mt-0.5">Jabra Evolve2 65</h3>
+                      </div>
+                      <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded">AST-09943</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Jabra • Wireless Headset • SN: JAB88291</p>
+                    <div class="bg-slate-50 rounded border border-slate-100 p-2 mb-4">
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Assigned Date</span><span class="font-semibold text-slate-900">Nov 10, 2023</span>
+                      </div>
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-slate-500">Expected Return</span><span class="font-semibold text-slate-900">Nov 10, 2025</span>
+                      </div>
+                      <div class="flex justify-between text-[11px]">
+                        <span class="text-slate-500">Warranty</span><span class="font-semibold text-slate-500">Expired</span>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-auto">
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-slate-700 bg-slate-50 border-slate-200">View History</button>
+                      <button class="btn-secondary flex-1 py-1.5 text-xs text-orange-600 border-orange-200">Track Repair</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              
+              <!-- Pagination -->
+              <div class="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+                <span class="text-xs text-slate-500">Showing 1 to 3 of 4 assigned assets</span>
+                <div class="flex items-center gap-1">
+                  <button class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 font-medium text-slate-500 hover:bg-slate-50">Prev</button>
+                  <button class="px-3 py-1.5 text-xs rounded-lg bg-blue-600 font-medium text-white">1</button>
+                  <button class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 font-medium text-slate-500 hover:bg-slate-50">2</button>
+                  <button class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 font-medium text-slate-500 hover:bg-slate-50">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (Summary, AI & Activity) -->
+        <div class="flex flex-col gap-6 lg:w-[28%]">
+          
+          <!-- MY ASSET SUMMARY -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Asset Summary</h3>
+            <div class="space-y-4">
+              <div>
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Primary Device</p>
+                <div class="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                  <i data-lucide="laptop" class="w-5 h-5 text-blue-600"></i>
+                  <div><p class="text-sm font-bold text-slate-900">MacBook Pro 14"</p><p class="text-[10px] text-slate-500">Assigned Jan 12, 2024</p></div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Warranty Status</span>
+                <span class="font-semibold text-green-600 flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> All Active</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Next Return Due</span>
+                <span class="font-semibold text-slate-900">Nov 10, 2025</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Pending Requests</span>
+                <span class="badge badge-warning text-[10px] py-0.5">1 Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI RECOMMENDATIONS -->
+          <div class="card p-5 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-blue-600 fill-blue-600"></i> Smart Asset Suggestions</h3>
+            <div class="flex flex-col gap-3">
+              <div class="bg-white border border-slate-100 rounded-lg p-3 shadow-sm hover:border-blue-300 transition-colors">
+                <div class="flex justify-between items-start mb-1">
+                  <p class="text-sm font-bold text-slate-900">CalDigit TS4 Dock</p>
+                  <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-600"></i>
+                </div>
+                <p class="text-xs text-slate-500 mb-2">Frequently requested with MacBook Pro 14".</p>
+                <button class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded w-full hover:bg-blue-100 transition-colors">Request Asset</button>
+              </div>
+              <div class="bg-white border border-slate-100 rounded-lg p-3 shadow-sm hover:border-blue-300 transition-colors">
+                <div class="flex justify-between items-start mb-1">
+                  <p class="text-sm font-bold text-slate-900">Ergonomic Keyboard</p>
+                  <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500"></i>
+                </div>
+                <p class="text-xs text-slate-500 mb-2">Recommended replacement for aging equipment.</p>
+                <button class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded w-full hover:bg-blue-100 transition-colors">Request Asset</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RECENT ACTIVITY -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Recent Activity</h3>
+            <div class="border-l-2 border-slate-200 ml-2 pl-4 py-1 space-y-4">
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Mouse Request Submitted</p>
+                <p class="text-xs text-slate-500">Yesterday, 2:30 PM</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Jabra Headset Repair</p>
+                <p class="text-xs text-slate-500">Aug 15, 2026</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Dell Monitor Assigned</p>
+                <p class="text-xs text-slate-500">Feb 05, 2024</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">MacBook Pro Assigned</p>
+                <p class="text-xs text-slate-500">Jan 12, 2024</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <!-- BOTTOM SECTION (Charts) -->
+      <h3 class="text-base font-bold text-slate-900 mb-4 mt-4">Asset Insights</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Asset Usage Bar Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Asset Usage</h4>
+          <p class="text-xs text-slate-500 mb-4">Duration of assigned assets (years)</p>
+          <div class="chart-container"><canvas id="chart-usage"></canvas></div>
+        </div>
+        
+        <!-- Categories Donut Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Asset Categories</h4>
+          <p class="text-xs text-slate-500 mb-4">Distribution of your items</p>
+          <div class="chart-container flex justify-center"><div style="width:180px; height:180px;"><canvas id="chart-category"></canvas></div></div>
+        </div>
+        
+        <!-- Warranty Timeline Line Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Warranty Timeline</h4>
+          <p class="text-xs text-slate-500 mb-4">Expiring warranties overview</p>
+          <div class="chart-container"><canvas id="chart-warranty"></canvas></div>
+        </div>
+        
+        <!-- Condition Pie Chart -->
+        <div class="card p-5 flex flex-col">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Condition Distribution</h4>
+          <p class="text-xs text-slate-500 mb-4">Overall health of your assets</p>
+          <div class="chart-container flex justify-center"><div style="width:180px; height:180px;"><canvas id="chart-condition"></canvas></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ============================== ASSET DETAILS DRAWER ============================== -->
+<div id="drawer-overlay" class="fixed inset-0" onclick="closeDrawer()"></div>
+<div id="drawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[70] flex flex-col shadow-2xl">
+  
+  <div class="relative h-40 bg-slate-100 flex-shrink-0 flex items-center justify-center p-6 border-b border-slate-200">
+    <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500&auto=format&fit=crop&q=80" class="h-full object-contain" />
+    <button class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors border border-slate-200 shadow-sm" onclick="closeDrawer()"><i data-lucide="x" class="w-4 h-4 text-slate-700"></i></button>
+    <div class="absolute bottom-4 left-4 flex gap-2">
+      <span class="badge badge-success text-xs">Active</span>
+    </div>
+  </div>
+  
+  <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+    <!-- Info Section -->
+    <div>
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Laptop</span>
+          <h2 class="text-xl font-bold text-slate-900 mt-0.5">MacBook Pro 14"</h2>
+        </div>
+        <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded">AST-10492</span>
+      </div>
+      <p class="text-sm text-slate-500 mb-4">Apple • M2 Pro • 16GB RAM • 512GB SSD</p>
+      
+      <div class="bg-slate-50 border border-slate-100 rounded-lg p-4 grid grid-cols-2 gap-4">
+        <div><p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Serial Number</p><p class="text-sm font-semibold text-slate-900">C02Y82F4LVD</p></div>
+        <div><p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Model Number</p><p class="text-sm font-semibold text-slate-900">A2442</p></div>
+      </div>
+    </div>
+    
+    <hr class="border-slate-100" />
+    
+    <!-- Assignment Details -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Assignment Details</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Assigned Date</span><span class="font-semibold text-slate-900">Jan 12, 2024</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Assigned By</span><span class="font-semibold text-slate-900">IT Department</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Return Date</span><span class="font-semibold text-slate-900">Jan 12, 2027</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Warranty Expiry</span><span class="font-semibold text-green-600">Jan 12, 2027 (Active)</span>
+        </div>
+      </div>
+    </div>
+    
+    <hr class="border-slate-100" />
+    
+    <!-- Condition -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Condition & Health</h3>
+      <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="check-circle" class="w-4 h-4 text-blue-600"></i>
+          <span class="text-sm font-bold text-blue-900">Excellent Condition</span>
+        </div>
+        <p class="text-xs text-blue-800 mb-2">Inspection Notes: Device deployed brand new. No physical damage reported.</p>
+        <p class="text-xs text-blue-800 font-semibold">Last Service Date: N/A</p>
+      </div>
+    </div>
+
+    <hr class="border-slate-100" />
+    
+    <!-- Accessories -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Included Accessories</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100"><i data-lucide="plug-2" class="w-4 h-4 text-slate-400"></i> 67W Charger</div>
+        <div class="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100"><i data-lucide="cable" class="w-4 h-4 text-slate-400"></i> MagSafe Cable</div>
+        <div class="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100"><i data-lucide="briefcase" class="w-4 h-4 text-slate-400"></i> Laptop Bag</div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Footer Buttons -->
+  <div class="p-4 border-t border-slate-200 bg-slate-50 flex gap-3 flex-shrink-0">
+    <button class="btn-secondary px-3 tooltip" title="Download Details"><i data-lucide="download" class="w-4 h-4"></i></button>
+    <button class="btn-secondary flex-1 border-slate-300 text-slate-700">Request Return</button>
+    <button class="btn-primary flex-1 bg-orange-600 hover:bg-orange-700" onclick="openModal('report-damage-modal')">Report Damage</button>
+  </div>
+</div>
+
+<!-- ============================== REQUEST ASSET MODAL (WIZARD) ============================== -->
+<div id="request-asset-modal" class="modal-container fixed inset-0 flex items-center justify-center">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal('request-asset-modal')"></div>
+  <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Request New Asset</h2>
+        <p class="text-xs text-slate-500">Submit a request for workplace equipment</p>
+      </div>
+      <button class="p-2 hover:bg-slate-200 rounded-lg transition-colors" onclick="closeModal('request-asset-modal')"><i data-lucide="x" class="w-4 h-4 text-slate-500"></i></button>
+    </div>
+    
+    <!-- Wizard Steps Indicator -->
+    <div class="px-10 py-5 bg-white border-b border-slate-100 flex justify-between">
+      <div class="wizard-step active">
+        <div class="step-circle">1</div>
+        <span class="text-[10px] font-bold text-blue-600 mt-1 uppercase">Category</span>
+      </div>
+      <div class="wizard-step">
+        <div class="step-circle">2</div>
+        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase">Asset Type</span>
+      </div>
+      <div class="wizard-step">
+        <div class="step-circle">3</div>
+        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase">Justification</span>
+      </div>
+      <div class="wizard-step">
+        <div class="step-circle">4</div>
+        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase">Review</span>
+      </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
+      <h3 class="text-base font-bold text-slate-900 mb-4">Select Asset Category</h3>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <!-- Category Cards -->
+        <div class="bg-white border-2 border-blue-600 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer shadow-sm relative">
+          <div class="absolute top-2 right-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-blue-600"></i></div>
+          <i data-lucide="monitor" class="w-8 h-8 text-blue-600 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Monitors</p>
+          <p class="text-[10px] text-slate-500 mt-1">Displays & Screens</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <i data-lucide="laptop" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Laptops</p>
+          <p class="text-[10px] text-slate-500 mt-1">Computers & Tablets</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <i data-lucide="headphones" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Headsets</p>
+          <p class="text-[10px] text-slate-500 mt-1">Audio & Comm</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <i data-lucide="keyboard" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Peripherals</p>
+          <p class="text-[10px] text-slate-500 mt-1">Keyboard & Mouse</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <i data-lucide="usb" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Docks</p>
+          <p class="text-[10px] text-slate-500 mt-1">Adapters & Hubs</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <i data-lucide="smartphone" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="font-bold text-slate-900 text-sm">Phones</p>
+          <p class="text-[10px] text-slate-500 mt-1">Mobile Devices</p>
+        </div>
+      </div>
+      
+      <div class="mt-6 bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0"></i>
+        <p class="text-xs text-blue-800">Standard monitor requests are automatically approved. Specialty items may require manager approval (est. 24-48 hrs).</p>
+      </div>
+    </div>
+    
+    <div class="p-4 border-t border-slate-100 bg-white flex justify-between gap-3">
+      <button class="btn-secondary w-24 opacity-50 cursor-not-allowed">Previous</button>
+      <button class="btn-primary w-24">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== REPORT DAMAGE MODAL ============================== -->
+<div id="report-damage-modal" class="modal-container fixed inset-0 flex items-center justify-center">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal('report-damage-modal')"></div>
+  <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+    
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-red-50">
+      <div class="flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+        <div>
+          <h2 class="text-lg font-bold text-red-900">Report Asset Damage</h2>
+          <p class="text-xs text-red-700">Submit a repair request for an assigned asset</p>
+        </div>
+      </div>
+      <button class="p-2 hover:bg-red-100 rounded-lg transition-colors" onclick="closeModal('report-damage-modal')"><i data-lucide="x" class="w-4 h-4 text-red-700"></i></button>
+    </div>
+    
+    <div class="p-6 bg-white space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Asset</label>
+        <select class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-slate-50 cursor-not-allowed" disabled>
+          <option selected>MacBook Pro 14" (AST-10492)</option>
+        </select>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Issue Category</label>
+          <select class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
+            <option>Hardware Failure</option>
+            <option>Physical Damage</option>
+            <option>Battery Issue</option>
+            <option>Software/OS</option>
+            <option>Lost/Stolen</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Severity</label>
+          <select class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
+            <option>Low (Usable)</option>
+            <option>Medium (Impaired)</option>
+            <option>High (Unusable)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+        <textarea rows="4" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white resize-none" placeholder="Please describe the damage or issue in detail..."></textarea>
+      </div>
+      
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Upload Photos (Optional)</label>
+        <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
+          <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2"></i>
+          <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+          <p class="text-[10px] text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+      <button class="btn-secondary" onclick="closeModal('report-damage-modal')">Cancel</button>
+      <button class="btn-primary bg-red-600 hover:bg-red-700">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  
+  // Drawer / Modals
+  function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+  function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); setTimeout(() => document.getElementById(id).classList.add('open'), 10); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); setTimeout(() => document.getElementById(id).classList.add('hidden'), 200); }
+  
+  // Charts
+  // 1. Asset Usage Bar
+  new Chart(document.getElementById('chart-usage').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['< 1 Year', '1-2 Years', '2-3 Years', '3+ Years'],
+      datasets: [{ label: 'Assets', data: [2, 1, 1, 0], backgroundColor: '#2563EB', borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false }, ticks: { stepSize: 1 } } } }
+  });
+
+  // 2. Categories Donut
+  new Chart(document.getElementById('chart-category').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Laptop', 'Monitor', 'Accessories', 'Phones'],
+      datasets: [{ data: [1, 1, 2, 0], backgroundColor: ['#2563EB', '#14B8A6', '#F59E0B', '#9333EA'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } } } }
+  });
+
+  // 3. Warranty Line
+  new Chart(document.getElementById('chart-warranty').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['Q1 25','Q2 25','Q3 25','Q4 25','2026', '2027'],
+      datasets: [{ label: 'Expiring', data: [0, 0, 0, 1, 0, 2], borderColor: '#14B8A6', backgroundColor: 'rgba(20,184,166,0.1)', borderWidth: 2, fill: true, tension: 0.4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#F1F5F9' }, ticks: { stepSize: 1 } } } }
+  });
+  
+  // 4. Condition Pie
+  new Chart(document.getElementById('chart-condition').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: ['Excellent', 'Good', 'Fair', 'Needs Repair'],
+      datasets: [{ data: [1, 2, 0, 1], backgroundColor: ['#22C55E', '#3B82F6', '#F59E0B', '#EF4444'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } } } }
+  });
+</script>
+
+<script>
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>

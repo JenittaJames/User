@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — AI Workspace Assistant</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --secondary: #14B8A6;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar { width: 260px; min-width: 260px; transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1); }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label, #sidebar.collapsed .sidebar-logo-text, #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04); transition: box-shadow 0.2s, transform 0.2s; }
+    .card:hover { box-shadow: 0 4px 16px 0 rgba(15,23,42,.08); }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px 0 rgba(37,99,235,.08); border-color: #BFDBFE; }
+    
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #DCFCE7; color: #15803D; }
+    .badge-warning { background: #FEF9C3; color: #A16207; }
+    .badge-danger  { background: #FEE2E2; color: #B91C1C; }
+    .badge-info    { background: #DBEAFE; color: #1D4ED8; }
+    .badge-purple  { background: #F3E8FF; color: #7E22CE; }
+    .badge-neutral { background: #F1F5F9; color: #475569; }
+
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+    
+    /* Chat bubbles */
+    .chat-bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; max-width: 85%; }
+    .chat-bubble.user { background: var(--primary); color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
+    .chat-bubble.ai { background: #F1F5F9; color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; align-self: flex-start; }
+
+    /* Custom Toggles */
+    .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+    .toggle-checkbox:checked + .toggle-label { background-color: var(--primary); }
+    .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
+    .toggle-label { width: 36px; height: 20px; background-color: #CBD5E1; border-radius: 9999px; position: relative; cursor: pointer; transition: background-color .2s; }
+    .toggle-label:after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background-color: white; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+    /* Utilities */
+    .search-bar:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 80px; }
+    .chart-container { position: relative; height: 200px; width: 100%; }
+    
+    /* Typing animation */
+    .typing-dot { width: 6px; height: 6px; background-color: #94A3B8; border-radius: 50%; display: inline-block; animation: typing 1.4s infinite ease-in-out both; }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <!-- Nav -->
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item active"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">AI Workspace Assistant</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">AI Workspace Assistant</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex justify-center px-4">
+      <div class="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-sm text-slate-900 w-full" />
+        <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">K</kbd>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="sun" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#64748B;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll" class="flex-1 overflow-y-auto">
+    <div class="mx-auto px-6 py-6" style="max-width:1440px;">
+      
+      <!-- HEADER SECTION -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold mb-1 flex items-center gap-2" style="color:#0F172A;">
+            <i data-lucide="sparkles" class="w-6 h-6 text-blue-600 fill-blue-600"></i> AI Workspace Assistant
+          </h2>
+          <p class="text-sm" style="color:#64748B;">Receive intelligent workspace, booking and operational recommendations powered by AI.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-secondary"><i data-lucide="settings" class="w-4 h-4"></i> AI Settings</button>
+          <button class="btn-primary"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh Recommendations</button>
+        </div>
+      </div>
+
+      <!-- MAIN 70/30 SPLIT -->
+      <div class="flex flex-col lg:flex-row gap-6 mb-8">
+        
+        <!-- LEFT COLUMN (Main AI Interaction) -->
+        <div class="flex flex-col gap-6 lg:w-[70%]">
+          
+          <!-- AI CHAT CARD -->
+          <div class="card flex flex-col h-[500px] border-blue-100 overflow-hidden" style="box-shadow: 0 10px 40px -10px rgba(37,99,235,0.1);">
+            <!-- Chat Header -->
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md">
+                  <i data-lucide="bot" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-900 text-sm">FacilityOps AI Assistant</h3>
+                  <p class="text-xs text-blue-600 font-medium">Online • Powered by Gemini</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Chat Body -->
+            <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-white" id="chat-messages">
+              <!-- AI Welcome -->
+              <div class="chat-bubble ai">
+                Hi Sarah! 👋 I'm your AI Workspace Assistant. I can help you find the perfect desk, locate your team, or provide insights about the office today. How can I assist you?
+              </div>
+              
+              <!-- Suggested Questions Bubbles -->
+              <div class="flex flex-wrap gap-2 mt-2 mb-4">
+                <button class="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">Find me a quiet desk</button>
+                <button class="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">Where is my team sitting?</button>
+                <button class="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">Which floor is least crowded today?</button>
+                <button class="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">Suggest a workspace with dual monitors</button>
+              </div>
+
+              <!-- User Message -->
+              <div class="chat-bubble user">
+                Book a desk near my team with a standing desk.
+              </div>
+              
+              <!-- AI Response with embedded UI -->
+              <div class="flex flex-col gap-1 w-full max-w-[85%] self-start">
+                <div class="chat-bubble ai rounded-bl-none w-full max-w-full">
+                  I found a great match for you! **Desk A-214** is a standing desk located on Floor 2. It's in the Creative Zone right next to Mark and Elena from your Engineering team.
+                  
+                  Would you like to book this now?
+                </div>
+                <!-- Action Buttons for AI Response -->
+                <div class="flex items-center gap-2 pl-2">
+                  <button class="p-1.5 text-slate-400 hover:text-blue-600 tooltip" title="Copy Response"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                  <button class="p-1.5 text-slate-400 hover:text-blue-600 tooltip" title="Regenerate Response"><i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i></button>
+                </div>
+              </div>
+
+              <!-- Typing Indicator Mock -->
+              <div class="chat-bubble ai flex items-center gap-1 w-16 py-3">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+              </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="p-4 bg-white border-t border-slate-100">
+              <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1 pr-2 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                <button class="p-2 text-slate-400 hover:text-blue-600 transition-colors"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
+                <input type="text" placeholder="Ask AI anything..." class="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 py-2" />
+                <button class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white hover:bg-blue-700 transition-colors shadow-sm"><i data-lucide="send" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- SMART DESK RECOMMENDATIONS -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4 text-blue-600"></i> Smart Desk Recommendation</h3>
+              <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10 pointer-events-none"><i data-lucide="sparkles" class="w-24 h-24 text-blue-600"></i></div>
+                <div class="relative z-10">
+                  <div class="flex justify-between items-start mb-2">
+                    <h4 class="text-xl font-bold text-slate-900">Desk A-214</h4>
+                    <span class="badge" style="background:#2563EB; color:white;">98% Match</span>
+                  </div>
+                  <p class="text-xs text-slate-600 mb-3">HQ Tower • Floor 2 • Creative Zone</p>
+                  <ul class="text-xs text-slate-700 space-y-1.5 mb-4">
+                    <li class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-green-500"></i> Near your team</li>
+                    <li class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-green-500"></i> Standing desk</li>
+                    <li class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-green-500"></i> Dual monitor</li>
+                    <li class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-green-500"></i> Quiet area</li>
+                  </ul>
+                  <div class="flex gap-2">
+                    <button class="btn-primary flex-1 py-2 text-xs shadow-sm">Book Now</button>
+                    <button class="btn-secondary flex-1 py-2 text-xs bg-white">View Desk</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TEAM RECOMMENDATIONS -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-purple-600"></i> Team Area Recommendation</h3>
+              <div class="bg-purple-50 border border-purple-100 rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10 pointer-events-none"><i data-lucide="users" class="w-24 h-24 text-purple-600"></i></div>
+                <div class="relative z-10">
+                  <div class="flex justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-slate-900">Best Seating Cluster</h4>
+                    <span class="badge badge-purple bg-purple-200 text-purple-800">Zone C</span>
+                  </div>
+                  <p class="text-xs text-slate-600 mb-3">Building B • Floor 3</p>
+                  <ul class="text-xs text-slate-700 space-y-1.5 mb-4 border-l-2 border-purple-200 pl-3 py-1">
+                    <li><span class="font-semibold text-slate-900">8</span> Team size supported</li>
+                    <li><span class="font-semibold text-slate-900">0 ft</span> Distance between desks (adjacent)</li>
+                    <li><span class="font-semibold text-slate-900">10m</span> to nearby Meeting Room B</li>
+                  </ul>
+                  <button class="btn-primary w-full py-2 text-xs bg-purple-600 hover:bg-purple-700 shadow-sm border-none">Reserve Team Area</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- SMART ASSET RECOMMENDATIONS -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="laptop" class="w-4 h-4 text-amber-500"></i> Recommended Assets</h3>
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="monitor" class="w-5 h-5 text-amber-600"></i></div>
+                    <div>
+                      <p class="text-sm font-bold text-slate-900">Dell 27" 4K Monitor</p>
+                      <p class="text-[11px] text-slate-500">Available nearby • Best condition</p>
+                    </div>
+                  </div>
+                  <button class="text-xs font-semibold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Request</button>
+                </div>
+                <div class="flex items-center justify-between p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center"><i data-lucide="headphones" class="w-5 h-5 text-amber-600"></i></div>
+                    <div>
+                      <p class="text-sm font-bold text-slate-900">Noise-Canceling Headset</p>
+                      <p class="text-[11px] text-slate-500">Frequently requested</p>
+                    </div>
+                  </div>
+                  <button class="text-xs font-semibold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Request</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI TASKS -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-green-500"></i> Quick AI Tasks</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <button class="flex flex-col items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors text-slate-700 hover:text-blue-700 group">
+                  <i data-lucide="calendar-plus" class="w-5 h-5 text-slate-400 group-hover:text-blue-600"></i>
+                  <span class="text-xs font-semibold">Book Workspace</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors text-slate-700 hover:text-blue-700 group">
+                  <i data-lucide="users" class="w-5 h-5 text-slate-400 group-hover:text-blue-600"></i>
+                  <span class="text-xs font-semibold">Find Team</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors text-slate-700 hover:text-blue-700 group">
+                  <i data-lucide="projector" class="w-5 h-5 text-slate-400 group-hover:text-blue-600"></i>
+                  <span class="text-xs font-semibold">Reserve Room</span>
+                </button>
+                <button class="flex flex-col items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors text-slate-700 hover:text-blue-700 group">
+                  <i data-lucide="wrench" class="w-5 h-5 text-slate-400 group-hover:text-blue-600"></i>
+                  <span class="text-xs font-semibold">Report Issue</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- AI INSIGHTS TEXT CARDS -->
+          <div class="card p-5 bg-gradient-to-br from-slate-900 to-slate-800 border-none text-white overflow-hidden relative shadow-lg">
+            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none"><i data-lucide="brain-circuit" class="w-48 h-48 text-white"></i></div>
+            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2 relative z-10"><i data-lucide="lightbulb" class="w-4 h-4 text-yellow-400"></i> Facility Insights from AI</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
+              <div class="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-lg">
+                <p class="text-xs text-slate-300">Engineering Behavior</p>
+                <p class="text-sm font-medium mt-1">Engineering usually occupies Floor 2 after 10 AM.</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-lg">
+                <p class="text-xs text-slate-300">Peak Usage</p>
+                <p class="text-sm font-medium mt-1">Meeting rooms are busiest between 2 PM and 4 PM.</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-lg">
+                <p class="text-xs text-slate-300">Current Availability</p>
+                <p class="text-sm font-medium mt-1">Zone C currently has the highest availability (42%).</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur border border-white/20 p-3 rounded-lg">
+                <p class="text-xs text-slate-300">Occupancy Alert</p>
+                <p class="text-sm font-medium mt-1 text-yellow-300">Building B occupancy expected to reach 90% today.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (Sidebar Settings & Status) -->
+        <div class="flex flex-col gap-6 lg:w-[30%]">
+          
+          <!-- AI ASSISTANT STATUS -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Assistant Status</h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Model Engine</span>
+                <span class="font-semibold text-slate-900 flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-green-500"></div> Gemini 1.5 Pro</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Last Updated</span>
+                <span class="font-semibold text-slate-900">Just now</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Daily Recs</span>
+                <span class="font-semibold text-slate-900">142</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">Avg Response Time</span>
+                <span class="font-semibold text-slate-900">0.8s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI SETTINGS (PREFERENCES) -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+              <h3 class="text-sm font-bold text-slate-900">AI Preferences</h3>
+              <button class="text-xs font-semibold text-blue-600">Save</button>
+            </div>
+            
+            <div class="space-y-4">
+              <!-- Selects -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Preferred Workspace</label>
+                <select class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
+                  <option>Hot Desk</option>
+                  <option>Dedicated Desk</option>
+                  <option>Private Office</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Floor</label>
+                  <select class="w-full text-sm border border-slate-200 rounded-lg px-2 py-2 outline-none bg-white">
+                    <option>Any Floor</option>
+                    <option selected>Floor 2</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Zone</label>
+                  <select class="w-full text-sm border border-slate-200 rounded-lg px-2 py-2 outline-none bg-white">
+                    <option>Creative Zone</option>
+                    <option>Quiet Zone</option>
+                  </select>
+                </div>
+              </div>
+              
+              <hr class="border-slate-100 my-2" />
+              
+              <!-- Toggles -->
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-sm font-medium text-slate-700">Near My Team</span>
+                <div class="relative">
+                  <input type="checkbox" class="sr-only toggle-checkbox" checked>
+                  <div class="toggle-label"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-sm font-medium text-slate-700">Quiet Zone Required</span>
+                <div class="relative">
+                  <input type="checkbox" class="sr-only toggle-checkbox">
+                  <div class="toggle-label"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-sm font-medium text-slate-700">Natural Light</span>
+                <div class="relative">
+                  <input type="checkbox" class="sr-only toggle-checkbox" checked>
+                  <div class="toggle-label"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-sm font-medium text-slate-700">Standing Desk</span>
+                <div class="relative">
+                  <input type="checkbox" class="sr-only toggle-checkbox" checked>
+                  <div class="toggle-label"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-sm font-medium text-slate-700">Dual Monitor</span>
+                <div class="relative">
+                  <input type="checkbox" class="sr-only toggle-checkbox" checked>
+                  <div class="toggle-label"></div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- WORKSPACE INSIGHTS (Right Sidebar Version) -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Workspace Quick Stats</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400"><i data-lucide="arrow-down" class="w-4 h-4"></i></div>
+                <div><p class="text-xs text-slate-500">Least Crowded Floor</p><p class="text-sm font-bold text-slate-900">Floor 4 (12%)</p></div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
+                <div><p class="text-xs text-slate-500">Most Available Zone</p><p class="text-sm font-bold text-slate-900">Quiet Zone</p></div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                <div><p class="text-xs text-slate-500">Peak Occupancy Time</p><p class="text-sm font-bold text-slate-900">10:30 AM - 1:00 PM</p></div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400"><i data-lucide="coffee" class="w-4 h-4"></i></div>
+                <div><p class="text-xs text-slate-500">Coffee Area Nearby</p><p class="text-sm font-bold text-slate-900">Zone B, Zone C</p></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- RECENT AI REQUESTS -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Recent Requests</h3>
+            <div class="border-l-2 border-slate-200 ml-2 pl-4 py-1 space-y-4">
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Recommended Desk</p>
+                <p class="text-xs text-slate-500">10 mins ago</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-purple-500 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Suggested Team Area</p>
+                <p class="text-xs text-slate-500">2 hours ago</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+                <p class="text-sm font-medium text-slate-900">Predicted Occupancy</p>
+                <p class="text-xs text-slate-500">Yesterday</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <!-- BOTTOM SECTION (Charts) -->
+      <h3 class="text-base font-bold text-slate-900 mb-4 mt-4">AI Performance & Analytics</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Circular Progress (Donut Chart used to simulate) -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Recommendation Accuracy</h4>
+          <p class="text-xs text-slate-500 mb-4">Accepted vs rejected suggestions</p>
+          <div class="chart-container flex justify-center relative">
+            <div style="width:160px; height:160px;"><canvas id="chart-accuracy"></canvas></div>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none mt-2"><span class="text-2xl font-bold text-slate-900">92%</span></div>
+          </div>
+        </div>
+        
+        <!-- Preference Breakdown Bar Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Preference Breakdown</h4>
+          <p class="text-xs text-slate-500 mb-4">Most requested desk features</p>
+          <div class="chart-container"><canvas id="chart-preferences"></canvas></div>
+        </div>
+        
+        <!-- Occupancy Prediction Line Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Occupancy Prediction</h4>
+          <p class="text-xs text-slate-500 mb-4">AI forecast for today</p>
+          <div class="chart-container"><canvas id="chart-prediction"></canvas></div>
+        </div>
+        
+        <!-- Recommendation Distribution Pie Chart -->
+        <div class="card p-5 flex flex-col">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Recommendation Types</h4>
+          <p class="text-xs text-slate-500 mb-4">Distribution of AI suggestions</p>
+          <div class="chart-container flex justify-center"><div style="width:180px; height:180px;"><canvas id="chart-distribution"></canvas></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+
+<script>
+  lucide.createIcons();
+  
+  // Charts
+  // 1. Accuracy Circular (Donut)
+  new Chart(document.getElementById('chart-accuracy').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Accepted', 'Rejected', 'Ignored'],
+      datasets: [{ data: [92, 5, 3], backgroundColor: ['#22C55E', '#EF4444', '#E2E8F0'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: true } } }
+  });
+
+  // 2. Preferences Bar
+  new Chart(document.getElementById('chart-preferences').getContext('2d'), {
+    type: 'bar',
+    indexAxis: 'y',
+    data: {
+      labels: ['Dual Monitor', 'Window', 'Quiet', 'Standing'],
+      datasets: [{ label: 'Requests', data: [85, 60, 45, 75], backgroundColor: '#2563EB', borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+  });
+
+  // 3. Occupancy Line
+  new Chart(document.getElementById('chart-prediction').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['8am','10am','12pm','2pm','4pm','6pm'],
+      datasets: [{ label: 'Predicted Occupancy', data: [20, 85, 95, 70, 40, 10], borderColor: '#14B8A6', backgroundColor: 'rgba(20,184,166,0.1)', borderWidth: 2, fill: true, tension: 0.4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#F1F5F9' } } } }
+  });
+  
+  // 4. Distribution Pie
+  new Chart(document.getElementById('chart-distribution').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: ['Desks', 'Teams', 'Assets', 'Insights'],
+      datasets: [{ data: [55, 20, 15, 10], backgroundColor: ['#2563EB', '#9333EA', '#F59E0B', '#14B8A6'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6, font: { size: 10 } } } } }
+  });
+</script>
+
+<script>
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>

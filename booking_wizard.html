@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — Complete Booking</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar { width: 260px; min-width: 260px; transition: width 0.25s; }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label, #sidebar.collapsed .sidebar-logo-text, #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04); }
+    
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; cursor: pointer; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; cursor: pointer; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+
+    /* Utilities */
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 80px; }
+
+    /* Wizard Steps */
+    .wizard-step { display: flex; align-items: center; gap: 16px; opacity: 0.5; transition: opacity 0.3s; }
+    .wizard-step.active { opacity: 1; }
+    .wizard-step.completed { opacity: 1; }
+    .step-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+    .wizard-step.active .step-circle { background: var(--primary); color: white; box-shadow: 0 0 0 4px #EFF6FF; }
+    .wizard-step.completed .step-circle { background: var(--success); color: white; }
+    .wizard-step.pending .step-circle { background: #F1F5F9; color: var(--text-muted); border: 1px solid var(--border); }
+    .step-label { font-weight: 600; font-size: 14px; color: var(--text); }
+    .step-desc { font-size: 12px; color: var(--text-muted); }
+    .step-connector { width: 2px; height: 40px; background: var(--border); margin-left: 15px; my-2; }
+    .step-connector.completed { background: var(--success); }
+
+    /* Calendar Grid */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+    .cal-day { padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+    .cal-day:hover:not(.disabled) { background: #F1F5F9; }
+    .cal-day.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+    .cal-day.disabled { color: #CBD5E1; cursor: not-allowed; text-decoration: line-through; }
+    
+    .time-slot { padding: 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .time-slot:hover { border-color: #BFDBFE; background: #F8FAFC; }
+    .time-slot.active { border-color: var(--primary); background: #EFF6FF; box-shadow: 0 0 0 1px var(--primary); }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <!-- Nav -->
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">Dashboard</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">Dashboard</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex justify-center px-4">
+      <div class="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-sm text-slate-900 w-full" />
+        <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">K</kbd>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="sun" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#64748B;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll" class="flex-1 overflow-y-auto bg-slate-50">
+    <div class="mx-auto px-6 py-8" style="max-width:1100px;">
+      
+      <!-- Back button -->
+      <a href="book_workspace.html" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-blue-600 mb-6 transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Workspace Search
+      </a>
+
+      <div class="flex flex-col lg:flex-row gap-8">
+        
+        <!-- LEFT COLUMN (Steps Indicator) -->
+        <div class="lg:w-[30%]">
+          <div class="card p-6 sticky top-6">
+            <h2 class="text-lg font-bold text-slate-900 mb-6">Booking Progress</h2>
+            
+            <div class="flex flex-col">
+              <!-- Step 1 -->
+              <div class="wizard-step completed">
+                <div class="step-circle"><i data-lucide="check" class="w-4 h-4"></i></div>
+                <div>
+                  <p class="step-label text-slate-900">Select Date</p>
+                  <p class="step-desc">Aug 27, 2026</p>
+                </div>
+              </div>
+              <div class="step-connector completed"></div>
+              
+              <!-- Step 2 -->
+              <div class="wizard-step active">
+                <div class="step-circle">2</div>
+                <div>
+                  <p class="step-label text-blue-600">Select Time</p>
+                  <p class="step-desc">Choose your duration</p>
+                </div>
+              </div>
+              <div class="step-connector"></div>
+              
+              <!-- Step 3 -->
+              <div class="wizard-step pending">
+                <div class="step-circle">3</div>
+                <div>
+                  <p class="step-label">Review Details</p>
+                  <p class="step-desc">Verify your booking</p>
+                </div>
+              </div>
+              <div class="step-connector"></div>
+              
+              <!-- Step 4 -->
+              <div class="wizard-step pending">
+                <div class="step-circle">4</div>
+                <div>
+                  <p class="step-label">Confirmation</p>
+                  <p class="step-desc">Get your confirmation</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-slate-100">
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Selected Workspace</p>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <i data-lucide="monitor" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-slate-900">Desk A-214</p>
+                  <p class="text-xs text-slate-500">HQ Tower • Floor 2</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN (Form Wizard Content) -->
+        <div class="lg:w-[70%]">
+          <div class="card p-8 bg-white min-h-[500px] flex flex-col">
+            
+            <div class="flex-1">
+              <h2 class="text-2xl font-bold text-slate-900 mb-2">When do you need this desk?</h2>
+              <p class="text-sm text-slate-500 mb-8">Select the date and time duration for your workspace booking.</p>
+              
+              <!-- Date Selection -->
+              <div class="mb-8">
+                <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i> Date
+                </h3>
+                
+                <div class="border border-slate-200 rounded-xl overflow-hidden max-w-sm">
+                  <div class="flex items-center justify-between p-3 bg-slate-50 border-b border-slate-200">
+                    <button class="p-1 hover:bg-slate-200 rounded"><i data-lucide="chevron-left" class="w-4 h-4 text-slate-600"></i></button>
+                    <span class="font-bold text-sm text-slate-900">August 2026</span>
+                    <button class="p-1 hover:bg-slate-200 rounded"><i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i></button>
+                  </div>
+                  <div class="p-4 bg-white">
+                    <div class="cal-grid mb-2">
+                      <div class="text-xs font-semibold text-slate-400">Su</div>
+                      <div class="text-xs font-semibold text-slate-400">Mo</div>
+                      <div class="text-xs font-semibold text-slate-400">Tu</div>
+                      <div class="text-xs font-semibold text-slate-400">We</div>
+                      <div class="text-xs font-semibold text-slate-400">Th</div>
+                      <div class="text-xs font-semibold text-slate-400">Fr</div>
+                      <div class="text-xs font-semibold text-slate-400">Sa</div>
+                    </div>
+                    <div class="cal-grid">
+                      <div class="cal-day disabled">23</div>
+                      <div class="cal-day disabled">24</div>
+                      <div class="cal-day disabled">25</div>
+                      <div class="cal-day disabled">26</div>
+                      <div class="cal-day active">27</div>
+                      <div class="cal-day">28</div>
+                      <div class="cal-day">29</div>
+                      <div class="cal-day">30</div>
+                      <div class="cal-day">31</div>
+                      <div class="cal-day" style="color:#CBD5E1">1</div>
+                      <div class="cal-day" style="color:#CBD5E1">2</div>
+                      <div class="cal-day" style="color:#CBD5E1">3</div>
+                      <div class="cal-day" style="color:#CBD5E1">4</div>
+                      <div class="cal-day" style="color:#CBD5E1">5</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Time Selection -->
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i> Duration
+                </h3>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                  <div class="time-slot active">
+                    <p class="font-bold text-slate-900 text-sm mb-1">Full Day</p>
+                    <p class="text-xs text-slate-500">9AM - 5PM</p>
+                  </div>
+                  <div class="time-slot">
+                    <p class="font-bold text-slate-900 text-sm mb-1">Morning</p>
+                    <p class="text-xs text-slate-500">9AM - 1PM</p>
+                  </div>
+                  <div class="time-slot">
+                    <p class="font-bold text-slate-900 text-sm mb-1">Afternoon</p>
+                    <p class="text-xs text-slate-500">1PM - 5PM</p>
+                  </div>
+                  <div class="time-slot">
+                    <p class="font-bold text-slate-900 text-sm mb-1">Custom</p>
+                    <p class="text-xs text-slate-500">Select hours</p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+            <!-- Wizard Footer Buttons -->
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-between mt-8">
+              <button class="btn-secondary" onclick="window.location.href='book_workspace.html'">Cancel</button>
+              <button class="btn-primary" onclick="alert('Proceeding to Review step...'); window.location.href='bookings.html';">Review & Confirm <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+<script>
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>

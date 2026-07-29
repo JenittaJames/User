@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — Team Booking</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --secondary: #14B8A6;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar { width: 260px; min-width: 260px; transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1); }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label, #sidebar.collapsed .sidebar-logo-text, #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04); transition: box-shadow 0.2s, transform 0.2s; }
+    .card:hover { box-shadow: 0 4px 16px 0 rgba(15,23,42,.08); }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px 0 rgba(37,99,235,.08); border-color: #BFDBFE; }
+    
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #DCFCE7; color: #15803D; }
+    .badge-warning { background: #FEF9C3; color: #A16207; }
+    .badge-danger  { background: #FEE2E2; color: #B91C1C; }
+    .badge-info    { background: #DBEAFE; color: #1D4ED8; }
+    .badge-purple  { background: #F3E8FF; color: #7E22CE; }
+    .badge-neutral { background: #F1F5F9; color: #475569; }
+
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+    .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .btn-outline:hover { background: #EFF6FF; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F8FAFC; font-weight: 600; font-size: 12px; color: var(--text-muted); padding: 12px 16px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+    td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #F8FAFC; }
+
+    /* Utilities */
+    .search-bar:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 80px; }
+    .chart-container { position: relative; height: 200px; width: 100%; }
+
+    /* Slide-over Drawer */
+    #drawer { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #drawer.open { transform: translateX(0); }
+    #drawer-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s; background: rgba(15,23,42,0.4); backdrop-filter: blur(2px); z-index: 60; }
+    #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+    /* Modal */
+    #modal { opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 80; }
+    #modal.open { opacity: 1; pointer-events: auto; }
+    #modal .modal-content { transform: scale(0.95); transition: transform 0.2s; }
+    #modal.open .modal-content { transform: scale(1); }
+    
+    /* Wizard Steps */
+    .wizard-step { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; flex: 1; }
+    .wizard-step::before { content: ''; position: absolute; top: 12px; left: -50%; width: 100%; height: 2px; background: #E2E8F0; z-index: 0; }
+    .wizard-step:first-child::before { display: none; }
+    .wizard-step.completed::before { background: var(--primary); }
+    .step-circle { width: 24px; height: 24px; border-radius: 50%; background: #F1F5F9; border: 2px solid #CBD5E1; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; z-index: 1; position: relative; }
+    .wizard-step.active .step-circle { background: #EFF6FF; border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 4px #EFF6FF; }
+    .wizard-step.completed .step-circle { background: var(--primary); border-color: var(--primary); color: white; }
+    
+    /* Interactive Seating Card */
+    .seat-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: white; cursor: grab; transition: all 0.2s; }
+    .seat-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .seat-card:hover { border-color: var(--primary); }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <!-- Nav -->
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item active"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">Team Booking</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">Team Booking</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex justify-center px-4">
+      <div class="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-sm text-slate-900 w-full" />
+        <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">K</kbd>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="sun" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#64748B;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll" class="flex-1 overflow-y-auto">
+    <div class="mx-auto px-6 py-6" style="max-width:1440px;">
+      
+      <!-- HEADER SECTION -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold mb-1" style="color:#0F172A;">Team Booking</h2>
+          <p class="text-sm" style="color:#64748B;">Reserve nearby workspaces for your team members in a single booking.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-outline"><i data-lucide="history" class="w-4 h-4"></i> Booking History</button>
+          <button class="btn-secondary" onclick="window.location.href='floor_plan.html'"><i data-lucide="map" class="w-4 h-4"></i> View Floor Plan</button>
+          <button class="btn-primary" onclick="openModal('team-booking-modal')"><i data-lucide="plus" class="w-4 h-4"></i> Create Team Booking</button>
+        </div>
+      </div>
+
+      <!-- 6 KPI SUMMARY CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#2563EB;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Today's Bookings</p>
+          <p class="text-2xl font-bold text-slate-900">4</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#14B8A6;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Upcoming</p>
+          <p class="text-2xl font-bold text-slate-900">12</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#F59E0B;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Team In Office</p>
+          <p class="text-2xl font-bold text-slate-900">8</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#EF4444;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Pending Invites</p>
+          <p class="text-2xl font-bold text-slate-900">3</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#22C55E;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Successful Bookings</p>
+          <p class="text-2xl font-bold text-slate-900">45</p>
+        </div>
+        <div class="card p-4 hover-card border-t-4" style="border-top-color:#9333EA;">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">AI Match Score</p>
+          <p class="text-2xl font-bold text-slate-900">96%</p>
+        </div>
+      </div>
+
+      <!-- MAIN 70/30 SPLIT -->
+      <div class="flex flex-col lg:flex-row gap-6">
+        
+        <!-- LEFT COLUMN (Main Table & Banner) -->
+        <div class="flex flex-col gap-6 lg:w-[72%]">
+          
+          <!-- AI RECOMMENDATION BANNER -->
+          <div class="card overflow-hidden" style="border:1px solid #BFDBFE;">
+            <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 relative">
+              <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none"><i data-lucide="users" class="w-40 h-40 text-blue-600"></i></div>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 relative">
+                <div>
+                  <h3 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 fill-blue-600"></i> AI Suggested Team Seating</h3>
+                  <div class="flex items-center gap-3 mb-2">
+                    <h2 class="text-xl font-bold text-slate-900">Building B • Floor 3 • Zone C</h2>
+                    <span class="badge badge-success">8 Available Seats</span>
+                    <span class="badge" style="background:#2563EB; color:white;">97% Match</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Seats are adjacent</span>
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Near meeting rooms</span>
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Near whiteboard & coffee</span>
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Low occupancy</span>
+                  </div>
+                </div>
+                <div class="flex-shrink-0">
+                  <button class="btn-primary" onclick="openModal('team-booking-modal')">Reserve This Layout</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEARCH & FILTERS -->
+          <div class="card p-5">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div class="search-bar flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 col-span-1 md:col-span-2">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                <input type="text" placeholder="Search team member..." class="flex-1 text-sm outline-none bg-transparent text-slate-900" />
+              </div>
+              <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
+                <option>Department: All</option>
+                <option>Engineering</option>
+                <option>Design</option>
+                <option>Product</option>
+              </select>
+              <input type="date" class="text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white text-slate-600" />
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Building: All</option>
+                <option>Building A</option>
+                <option>Building B</option>
+              </select>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Floor: All</option>
+                <option>Floor 1</option>
+                <option>Floor 2</option>
+              </select>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Zone: All</option>
+                <option>Creative Zone</option>
+                <option>Quiet Zone</option>
+              </select>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Workspace Type: Hot Desk</option>
+                <option>Dedicated Desk</option>
+              </select>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Min Team Size: 4</option>
+                <option>6</option>
+                <option>8</option>
+                <option>10+</option>
+              </select>
+              <select class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none bg-white">
+                <option>Availability: All</option>
+                <option>Available Now</option>
+              </select>
+              <div class="flex-1"></div>
+              <button class="text-xs font-semibold text-blue-600 hover:underline">Reset Filters</button>
+            </div>
+          </div>
+
+          <!-- TEAM BOOKING TABLE -->
+          <div class="card overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 class="text-sm font-bold text-slate-900">Recent Team Bookings</h3>
+              <button class="text-xs font-semibold text-blue-600 hover:underline">View All</button>
+            </div>
+            <div class="table-container border-none rounded-none">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Booking Date</th>
+                    <th>Location</th>
+                    <th>Team Size</th>
+                    <th>Booked By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDrawer()">
+                    <td class="font-medium text-slate-900">#TB-4921</td>
+                    <td><p class="font-medium">Aug 28, 2026</p><p class="text-xs text-slate-500">9:00 AM - 5:00 PM</p></td>
+                    <td><p class="font-medium">Bldg B • Fl 3</p><p class="text-xs text-slate-500">Zone C</p></td>
+                    <td>
+                      <div class="flex items-center">
+                        <div class="flex -space-x-2 mr-2">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=11">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=12">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=13">
+                        </div>
+                        <span class="text-xs font-medium">+5</span>
+                      </div>
+                    </td>
+                    <td><div class="flex items-center gap-2"><img src="https://i.pravatar.cc/150?img=47" class="w-6 h-6 rounded-full"> <span class="text-sm">You</span></div></td>
+                    <td><span class="badge badge-success">Confirmed</span></td>
+                    <td><button class="p-1.5 hover:bg-slate-200 rounded text-slate-500" onclick="event.stopPropagation()"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDrawer()">
+                    <td class="font-medium text-slate-900">#TB-4920</td>
+                    <td><p class="font-medium">Aug 29, 2026</p><p class="text-xs text-slate-500">1:00 PM - 5:00 PM</p></td>
+                    <td><p class="font-medium">HQ Tower • Fl 2</p><p class="text-xs text-slate-500">Creative Zone</p></td>
+                    <td>
+                      <div class="flex items-center">
+                        <div class="flex -space-x-2 mr-2">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=47">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=15">
+                        </div>
+                        <span class="text-xs font-medium">4 Members</span>
+                      </div>
+                    </td>
+                    <td><div class="flex items-center gap-2"><img src="https://i.pravatar.cc/150?img=15" class="w-6 h-6 rounded-full"> <span class="text-sm">David P.</span></div></td>
+                    <td><span class="badge badge-warning">Pending</span></td>
+                    <td><button class="p-1.5 hover:bg-slate-200 rounded text-slate-500" onclick="event.stopPropagation()"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDrawer()">
+                    <td class="font-medium text-slate-900">#TB-4890</td>
+                    <td><p class="font-medium">Aug 25, 2026</p><p class="text-xs text-slate-500">9:00 AM - 5:00 PM</p></td>
+                    <td><p class="font-medium">HQ Tower • Fl 1</p><p class="text-xs text-slate-500">Sales Zone</p></td>
+                    <td>
+                      <div class="flex items-center">
+                        <div class="flex -space-x-2 mr-2">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=21">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=22">
+                        </div>
+                        <span class="text-xs font-medium">6 Members</span>
+                      </div>
+                    </td>
+                    <td><div class="flex items-center gap-2"><img src="https://i.pravatar.cc/150?img=47" class="w-6 h-6 rounded-full"> <span class="text-sm">You</span></div></td>
+                    <td><span class="badge badge-info text-blue-700 bg-blue-100">Completed</span></td>
+                    <td><button class="p-1.5 hover:bg-slate-200 rounded text-slate-500" onclick="event.stopPropagation()"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDrawer()">
+                    <td class="font-medium text-slate-900">#TB-4882</td>
+                    <td><p class="font-medium">Aug 24, 2026</p><p class="text-xs text-slate-500">10:00 AM - 3:00 PM</p></td>
+                    <td><p class="font-medium">Bldg B • Fl 1</p><p class="text-xs text-slate-500">Lobby</p></td>
+                    <td>
+                      <div class="flex items-center">
+                        <div class="flex -space-x-2 mr-2">
+                          <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?img=11">
+                        </div>
+                        <span class="text-xs font-medium">3 Members</span>
+                      </div>
+                    </td>
+                    <td><div class="flex items-center gap-2"><img src="https://i.pravatar.cc/150?img=47" class="w-6 h-6 rounded-full"> <span class="text-sm">You</span></div></td>
+                    <td><span class="badge badge-danger">Cancelled</span></td>
+                    <td><button class="p-1.5 hover:bg-slate-200 rounded text-slate-500" onclick="event.stopPropagation()"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (Sidebar tools) -->
+        <div class="flex flex-col gap-6 lg:w-[28%]">
+          
+          <!-- Team Availability -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-slate-900">Team Availability</h3>
+              <span class="text-xs text-slate-500">Today</span>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=11" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">Mark T.</p><p class="text-[11px] text-slate-500">In Office</p></div>
+                </div>
+                <button class="btn-outline text-[11px] px-2 py-1">Invite</button>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=33" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-amber-500 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">Lisa M.</p><p class="text-[11px] text-slate-500">Remote</p></div>
+                </div>
+                <button class="btn-outline text-[11px] px-2 py-1">Invite</button>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=15" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-slate-300 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">David P.</p><p class="text-[11px] text-slate-500">OOT</p></div>
+                </div>
+                <button class="btn-outline text-[11px] px-2 py-1 opacity-50 cursor-not-allowed">Invite</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Smart Insights -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-blue-600 fill-blue-600"></i> Smart Insights</h3>
+            <div class="flex flex-col gap-3">
+              <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                <p class="text-xs font-semibold text-blue-800 mb-1">Best Zone For Collaboration</p>
+                <p class="text-sm font-bold text-blue-900">Building B, Floor 3</p>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 flex justify-between items-center">
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1">Quiet Area Available</p>
+                  <p class="text-sm font-bold text-slate-900">HQ Tower, Floor 4</p>
+                </div>
+                <i data-lucide="headphones" class="w-5 h-5 text-slate-400"></i>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 flex justify-between items-center">
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1">Recommended Team Size</p>
+                  <p class="text-sm font-bold text-slate-900">6-8 Members</p>
+                </div>
+                <i class="w-5 h-5 text-slate-400" data-lucide="users"></i>
+              </div>
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 flex justify-between items-center">
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1">Predicted Occupancy</p>
+                  <p class="text-sm font-bold text-slate-900">Low (Tomorrow AM)</p>
+                </div>
+                <i class="w-5 h-5 text-slate-400" data-lucide="bar-chart-2"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Team Bookings Timeline -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">Activity</h3>
+            <div class="border-l-2 border-slate-200 ml-2 pl-4 py-1 space-y-4">
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                <p class="text-xs text-slate-500 mb-0.5">Today, 9:00 AM</p>
+                <p class="text-sm font-medium text-slate-900">#TB-4921 Checked In</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                <p class="text-xs text-slate-500 mb-0.5">Yesterday</p>
+                <p class="text-sm font-medium text-slate-900">#TB-4921 Created</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+                <p class="text-xs text-slate-500 mb-0.5">Aug 24</p>
+                <p class="text-sm font-medium text-slate-900">#TB-4882 Cancelled</p>
+              </div>
+              <div class="relative">
+                <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+                <p class="text-xs text-slate-500 mb-0.5">Aug 23</p>
+                <p class="text-sm font-medium text-slate-900">#TB-4890 Completed</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <!-- BOTTOM SECTION (Charts) -->
+      <h3 class="text-base font-bold text-slate-900 mb-4 mt-4">Team Booking Insights</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Trend Line Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Team Booking Trends</h4>
+          <p class="text-xs text-slate-500 mb-4">Bookings over the last 7 days</p>
+          <div class="chart-container"><canvas id="chart-trend"></canvas></div>
+        </div>
+        <!-- Bar Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Dept. Team Bookings</h4>
+          <p class="text-xs text-slate-500 mb-4">Bookings by department</p>
+          <div class="chart-container"><canvas id="chart-bar"></canvas></div>
+        </div>
+        <!-- Donut Chart -->
+        <div class="card p-5">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Average Team Size</h4>
+          <p class="text-xs text-slate-500 mb-4">Size of teams booking spaces</p>
+          <div class="chart-container flex justify-center"><div style="width:200px; height:200px;"><canvas id="chart-donut"></canvas></div></div>
+        </div>
+        <!-- Heatmap Placeholder -->
+        <div class="card p-5 flex flex-col">
+          <h4 class="text-sm font-bold text-slate-900 mb-1">Workspace Distribution</h4>
+          <p class="text-xs text-slate-500 mb-4">Popular zones for teams</p>
+          <div class="flex-1 rounded-lg bg-slate-100 overflow-hidden relative border border-slate-200 flex items-center justify-center">
+             <div class="absolute inset-0" style="background: radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.4) 0%, transparent 40%), radial-gradient(circle at 70% 60%, rgba(37, 99, 235, 0.4) 0%, transparent 40%), radial-gradient(circle at 50% 80%, rgba(34, 197, 94, 0.4) 0%, transparent 30%); opacity: 0.6;"></div>
+             <span class="relative z-10 text-xs font-semibold text-slate-600 bg-white/80 px-2 py-1 rounded backdrop-blur">Heatmap View</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ============================== BOOKING DETAILS DRAWER ============================== -->
+<div id="drawer-overlay" class="fixed inset-0" onclick="closeDrawer()"></div>
+<div id="drawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[70] flex flex-col shadow-2xl">
+  
+  <div class="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">#TB-4921</h2>
+      <p class="text-sm text-slate-500">Team Booking Details</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="badge badge-success">Confirmed</span>
+      <button class="p-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-100" onclick="closeDrawer()"><i data-lucide="x" class="w-4 h-4 text-slate-700"></i></button>
+    </div>
+  </div>
+  
+  <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+    <!-- Booking Info -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Booking Information</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div><p class="text-xs text-slate-500 mb-1">Date</p><p class="text-sm font-semibold text-slate-900">Aug 28, 2026</p></div>
+        <div><p class="text-xs text-slate-500 mb-1">Time</p><p class="text-sm font-semibold text-slate-900">9:00 AM - 5:00 PM</p></div>
+        <div><p class="text-xs text-slate-500 mb-1">Organizer</p><div class="flex items-center gap-1.5"><img src="https://i.pravatar.cc/150?img=47" class="w-5 h-5 rounded-full"><span class="text-sm font-semibold text-slate-900">Sarah J.</span></div></div>
+        <div><p class="text-xs text-slate-500 mb-1">Department</p><p class="text-sm font-semibold text-slate-900">Design</p></div>
+      </div>
+    </div>
+    
+    <hr class="border-slate-100" />
+    
+    <!-- Workspace Details -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Workspace Details</h3>
+      <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+        <div class="flex justify-between mb-2">
+          <span class="text-sm font-semibold text-blue-900">Building B • Floor 3 • Zone C</span>
+          <button class="text-xs text-blue-600 hover:underline">View Map</button>
+        </div>
+        <p class="text-xs text-blue-700">Workspace IDs: A-210, A-211, A-212, A-213, A-214, A-215, A-216, A-217</p>
+      </div>
+    </div>
+
+    <hr class="border-slate-100" />
+    
+    <!-- Team Members -->
+    <div>
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Team Members (8)</h3>
+      </div>
+      <div class="flex flex-col gap-2">
+        <!-- Member 1 -->
+        <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100">
+          <div class="flex items-center gap-3">
+            <img src="https://i.pravatar.cc/150?img=47" class="w-8 h-8 rounded-full">
+            <div><p class="text-sm font-semibold text-slate-900">Sarah J. (You)</p><p class="text-[11px] text-slate-500">Desk A-214</p></div>
+          </div>
+          <span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">Checked In</span>
+        </div>
+        <!-- Member 2 -->
+        <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100">
+          <div class="flex items-center gap-3">
+            <img src="https://i.pravatar.cc/150?img=11" class="w-8 h-8 rounded-full">
+            <div><p class="text-sm font-semibold text-slate-900">Mark T.</p><p class="text-[11px] text-slate-500">Desk A-215</p></div>
+          </div>
+          <span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">Checked In</span>
+        </div>
+        <!-- Member 3 -->
+        <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100">
+          <div class="flex items-center gap-3">
+            <img src="https://i.pravatar.cc/150?img=12" class="w-8 h-8 rounded-full">
+            <div><p class="text-sm font-semibold text-slate-900">Elena G.</p><p class="text-[11px] text-slate-500">Desk A-216</p></div>
+          </div>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded">Pending</span>
+        </div>
+      </div>
+    </div>
+    
+    <hr class="border-slate-100" />
+    
+    <!-- Timeline -->
+    <div>
+      <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Booking Timeline</h3>
+      <div class="border-l-2 border-slate-200 ml-2 pl-4 py-1 space-y-4">
+        <div class="relative">
+          <div class="absolute -left-[23px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+          <p class="text-sm font-medium text-slate-900">Checked In (2/8)</p>
+          <p class="text-xs text-slate-500">Today, 9:02 AM</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+          <p class="text-sm font-medium text-slate-900">Invitations Sent</p>
+          <p class="text-xs text-slate-500">Yesterday, 4:05 PM</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+          <p class="text-sm font-medium text-slate-900">Confirmed</p>
+          <p class="text-xs text-slate-500">Yesterday, 4:00 PM</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-[23px] top-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></div>
+          <p class="text-sm font-medium text-slate-900">Created</p>
+          <p class="text-xs text-slate-500">Yesterday, 3:55 PM</p>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Footer Buttons -->
+  <div class="p-4 border-t border-slate-200 bg-slate-50 flex gap-3 flex-shrink-0">
+    <button class="btn-primary flex-1 py-3" onclick="window.location.href='floor_plan.html'">View Floor Plan</button>
+    <button class="btn-secondary px-4 text-blue-600 border-blue-200">Edit</button>
+    <button class="btn-secondary px-4 text-red-600 border-red-200">Cancel</button>
+  </div>
+</div>
+
+<!-- ============================== CREATE TEAM BOOKING MODAL (WIZARD) ============================== -->
+<div id="team-booking-modal" class="fixed inset-0 flex items-center justify-center hidden z-[80]">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal('team-booking-modal')"></div>
+  <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Create Team Booking</h2>
+        <p class="text-xs text-slate-500">Reserve nearby workspaces for your team</p>
+      </div>
+      <button class="p-2 hover:bg-slate-200 rounded-lg transition-colors" onclick="closeModal('team-booking-modal')"><i data-lucide="x" class="w-4 h-4 text-slate-500"></i></button>
+    </div>
+    
+    <!-- Wizard Steps Indicator -->
+    <div class="px-10 py-5 bg-white border-b border-slate-100 flex justify-between">
+      <div class="wizard-step completed">
+        <div class="step-circle"><i data-lucide="check" class="w-3 h-3"></i></div>
+        <span class="text-[10px] font-semibold text-slate-500 mt-1 uppercase">Date & Time</span>
+      </div>
+      <div class="wizard-step completed">
+        <div class="step-circle"><i data-lucide="check" class="w-3 h-3"></i></div>
+        <span class="text-[10px] font-semibold text-slate-500 mt-1 uppercase">Team Members</span>
+      </div>
+      <div class="wizard-step active">
+        <div class="step-circle">3</div>
+        <span class="text-[10px] font-bold text-blue-600 mt-1 uppercase">AI Assignment</span>
+      </div>
+      <div class="wizard-step">
+        <div class="step-circle">4</div>
+        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase">Review</span>
+      </div>
+      <div class="wizard-step">
+        <div class="step-circle">5</div>
+        <span class="text-[10px] font-semibold text-slate-400 mt-1 uppercase">Confirm</span>
+      </div>
+    </div>
+    
+    <!-- Step 3 Content (AI Workspace Assignment Preview) -->
+    <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
+      
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">AI Seating Preview</h3>
+          <p class="text-sm text-slate-500">Drag and drop cards to reassign seats based on AI recommendations.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-info bg-blue-100 text-blue-700"><i data-lucide="sparkles" class="w-3 h-3 mr-1"></i> Optimized Layout</span>
+        </div>
+      </div>
+      
+      <!-- Interactive Seating Map Mockup -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 relative min-h-[300px]">
+        <!-- Desk Group -->
+        <div class="grid grid-cols-4 gap-4 max-w-3xl mx-auto relative">
+          
+          <!-- Connections Mockup -->
+          <div class="absolute inset-0 pointer-events-none opacity-20">
+            <svg width="100%" height="100%"><line x1="12%" y1="50%" x2="88%" y2="50%" stroke="#2563EB" stroke-width="2" stroke-dasharray="4"></line></svg>
+          </div>
+          
+          <!-- Seat Card 1 -->
+          <div class="seat-card flex flex-col items-center">
+            <div class="w-full flex justify-between mb-2">
+              <span class="text-[10px] font-bold text-slate-400">Desk A-210</span>
+              <i data-lucide="monitor" class="w-3 h-3 text-slate-400"></i>
+            </div>
+            <img src="https://i.pravatar.cc/150?img=47" class="w-12 h-12 rounded-full mb-2 avatar-ring">
+            <p class="text-sm font-bold text-slate-900">Sarah J.</p>
+            <p class="text-[10px] text-slate-500">Organizer</p>
+          </div>
+          
+          <!-- Seat Card 2 -->
+          <div class="seat-card flex flex-col items-center">
+            <div class="w-full flex justify-between mb-2">
+              <span class="text-[10px] font-bold text-slate-400">Desk A-211</span>
+              <i data-lucide="monitor" class="w-3 h-3 text-slate-400"></i>
+            </div>
+            <img src="https://i.pravatar.cc/150?img=11" class="w-12 h-12 rounded-full mb-2">
+            <p class="text-sm font-bold text-slate-900">Mark T.</p>
+            <p class="text-[10px] text-slate-500">Design</p>
+          </div>
+          
+          <!-- Seat Card 3 -->
+          <div class="seat-card flex flex-col items-center">
+            <div class="w-full flex justify-between mb-2">
+              <span class="text-[10px] font-bold text-slate-400">Desk A-212</span>
+              <i data-lucide="monitor" class="w-3 h-3 text-slate-400"></i>
+            </div>
+            <img src="https://i.pravatar.cc/150?img=12" class="w-12 h-12 rounded-full mb-2">
+            <p class="text-sm font-bold text-slate-900">Elena G.</p>
+            <p class="text-[10px] text-slate-500">Design</p>
+          </div>
+          
+          <!-- Seat Card 4 -->
+          <div class="seat-card flex flex-col items-center border-dashed border-2 border-slate-300 bg-slate-50">
+            <div class="w-full flex justify-between mb-2">
+              <span class="text-[10px] font-bold text-slate-400">Desk A-213</span>
+              <i data-lucide="monitor" class="w-3 h-3 text-slate-400"></i>
+            </div>
+            <div class="w-12 h-12 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center mb-2 text-slate-400 bg-white"><i data-lucide="user-plus" class="w-4 h-4"></i></div>
+            <p class="text-sm font-bold text-slate-400">Unassigned</p>
+            <p class="text-[10px] text-slate-400">Available</p>
+          </div>
+          
+        </div>
+        
+        <div class="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
+          <p class="text-xs text-blue-800"><i data-lucide="info" class="w-3 h-3 inline mr-1"></i> AI has placed team members requiring dual monitors (Sarah, Mark) on desks A-210 and A-211.</p>
+          <button class="text-xs font-semibold text-blue-600 hover:underline">Re-run AI Assignment</button>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Footer -->
+    <div class="p-4 border-t border-slate-100 bg-white flex justify-between gap-3 flex-shrink-0">
+      <button class="btn-secondary w-24">Previous</button>
+      <div class="flex gap-3">
+        <button class="btn-secondary" onclick="closeModal('team-booking-modal')">Cancel</button>
+        <button class="btn-primary" onclick="alert('Proceeding to Review step...');">Review Booking <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  
+  // Drawer / Modals
+  function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+  function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); setTimeout(() => document.getElementById(id).classList.add('open'), 10); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); setTimeout(() => document.getElementById(id).classList.add('hidden'), 200); }
+  
+  // Charts
+  // 1. Trend Line Chart
+  new Chart(document.getElementById('chart-trend').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{ label: 'Team Bookings', data: [12, 19, 15, 25, 22, 5, 2], borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', borderWidth: 2, fill: true, tension: 0.4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#F1F5F9' } } } }
+  });
+
+  // 2. Bar Chart
+  new Chart(document.getElementById('chart-bar').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Eng', 'Design', 'Sales', 'Prod'],
+      datasets: [{ label: 'Bookings', data: [45, 30, 20, 15], backgroundColor: '#14B8A6', borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+  });
+
+  // 3. Donut Chart
+  new Chart(document.getElementById('chart-donut').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['2-4', '5-8', '9-12', '13+'],
+      datasets: [{ data: [40, 35, 15, 10], backgroundColor: ['#2563EB', '#14B8A6', '#F59E0B', '#9333EA'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6 } } } }
+  });
+</script>
+
+<script>
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>

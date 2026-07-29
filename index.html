@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FacilityOps AI — Employee Dashboard</title>
+  <meta name="description" content="FacilityOps AI Employee Dashboard — Plan your workday, reserve workspaces, manage assets and stay productive." />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --primary: #2563EB;
+      --secondary: #14B8A6;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --hover: #EFF6FF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Layout */
+    #sidebar {
+      width: 260px; min-width: 260px;
+      transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    #sidebar.collapsed { width: 80px; min-width: 80px; }
+    #sidebar.collapsed .nav-label,
+    #sidebar.collapsed .sidebar-logo-text,
+    #sidebar.collapsed .sidebar-logo-badge { display: none !important; }
+    #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    #sidebar.collapsed .sidebar-logo { justify-content: center; }
+    #sidebar.collapsed .nav-section-label { display: none; }
+
+    /* Navigation */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-size: 14px; font-weight: 500; color: var(--text-muted);
+      text-decoration: none; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--primary); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item svg { flex-shrink: 0; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 16px 0 rgba(15,23,42,.08); }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px 0 rgba(37,99,235,.08); border-color: #BFDBFE; }
+    
+    .quick-action-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .quick-action-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(37,99,235,0.08); transform: translateY(-2px); }
+    
+    .action-icon-bg {
+      width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #DCFCE7; color: #15803D; }
+    .badge-warning { background: #FEF9C3; color: #A16207; }
+    .badge-danger  { background: #FEE2E2; color: #B91C1C; }
+    .badge-info    { background: #DBEAFE; color: #1D4ED8; }
+    .badge-purple  { background: #F3E8FF; color: #7E22CE; }
+
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; }
+    .btn-outline-danger { background: transparent; color: var(--danger); border: 1px solid #FECACA; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .btn-outline-danger:hover { background: #FEF2F2; border-color: #FCA5A5; }
+
+    /* Tables */
+    .data-table th { font-size: 12px; font-weight: 600; letter-spacing: .05em; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); padding: 12px 16px; }
+    .data-table td { font-size: 13.5px; border-bottom: 1px solid #F1F5F9; padding: 12px 16px; }
+    .data-table tr:hover td { background: var(--hover); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    /* Timeline */
+    .timeline-item { position: relative; padding-bottom: 24px; }
+    .timeline-item::before { content: ''; position: absolute; left: 15px; top: 32px; bottom: 0; width: 2px; background: #E2E8F0; z-index: 0; }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-item:last-child { padding-bottom: 0; }
+
+    /* Utilities */
+    .search-bar:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB22; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid #fff; position: absolute; top: 4px; right: 4px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    #main-scroll { overflow-y: auto; height: 100vh; padding-bottom: 80px; }
+
+    /* AI Assistant FAB */
+    .ai-fab {
+      position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+      background: linear-gradient(135deg, #2563EB, #14B8A6);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 25px rgba(37,99,235,0.3); color: white;
+      cursor: pointer; z-index: 50; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ai-fab:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(37,99,235,0.4); }
+    .ai-fab-badge {
+      position: absolute; top: 0; right: 0; background: var(--danger); color: white;
+      font-size: 10px; font-weight: bold; width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center; border-radius: 50%;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside id="sidebar" class="flex flex-col border-r bg-white flex-shrink-0" style="border-color:#E2E8F0; z-index:40;">
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo flex items-center gap-3 px-5 py-5 border-b hover:bg-gray-50 transition-colors" style="border-color:#E2E8F0; min-height:65px; text-decoration:none;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#2563EB;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text flex flex-col leading-tight">
+      <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+    </div>
+  </a>
+
+  <!-- Nav -->
+  <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
+    <a href="index.html" class="nav-item active"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
+    <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
+    <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
+    <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
+  </div>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t" style="border-color:#E2E8F0;">
+    <a href="../login.html" class="nav-item" style="color:#EF4444;">
+      <i data-lucide="log-out" class="w-4 h-4" style="stroke:#EF4444;"></i>
+      <span class="nav-label">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="flex flex-col flex-1 min-w-0">
+
+  <!-- TOP NAV -->
+  <header class="flex items-center gap-4 px-6 bg-white sticky top-0 z-30" style="min-height:65px; border-bottom:1px solid #E2E8F0;">
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" aria-label="Toggle sidebar">
+        <i data-lucide="menu" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div>
+        <h1 class="text-base font-bold" style="color:#0F172A; line-height:1.2;">Dashboard</h1>
+        <nav class="flex items-center gap-1">
+          <a href="index.html" class="text-xs hover:underline hover:text-blue-600 transition-colors" style="color:#94A3B8;">Dashboard</a>
+          <i data-lucide="chevron-right" class="w-3 h-3" style="color:#CBD5E1;"></i>
+          <span class="text-xs font-medium" style="color:#64748B;">Dashboard</span>
+        </nav>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex justify-center px-4">
+      <div class="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-sm text-slate-900 w-full" />
+        <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-200">K</kbd>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="bell" class="w-5 h-5" style="color:#64748B;"></i>
+        <span class="notif-dot" style="background:#EF4444;"></span>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <button class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+        <i data-lucide="sun" class="w-5 h-5" style="color:#64748B;"></i>
+      </button>
+      <div class="w-px h-6 mx-1" style="background:#E2E8F0;"></div>
+      <div class="relative" id="avatar-btn" onclick="document.getElementById('avatar-menu').classList.toggle('hidden')" style="cursor:pointer;">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Profile" class="w-9 h-9 rounded-full avatar-ring object-cover" />
+        <div id="avatar-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50" style="border-color:#E2E8F0;">
+          <div class="px-4 py-3 border-b" style="border-color:#F1F5F9;">
+            <p class="text-sm font-semibold" style="color:#0F172A;">Sarah Jenkins</p>
+            <p class="text-xs" style="color:#64748B;">Design Team</p>
+          </div>
+          <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style="color:#0F172A;"><i data-lucide="user" class="w-4 h-4" style="color:#64748B;"></i> Profile</a>
+          <a href="../login.html" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style="color:#EF4444;"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="main-scroll" class="flex-1 overflow-y-auto">
+    <div class="mx-auto px-6 py-6" style="max-width:1400px;">
+      
+      <!-- HEADER SECTION -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold mb-1" style="color:#0F172A;">Welcome back, Sarah 👋</h2>
+          <p class="text-sm" style="color:#64748B;">Plan your workday, reserve workspaces, manage assets and stay productive.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-white border rounded-lg shadow-sm" style="border-color:#E2E8F0;">
+            <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+            <span class="text-sm font-medium" id="today-date-str" style="color:#0F172A;">Today</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-white border rounded-lg shadow-sm" style="border-color:#E2E8F0;">
+            <i class="w-2 h-2 rounded-full bg-green-500"></i>
+            <span class="text-sm font-medium" style="color:#0F172A;">HQ Tower</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-white border rounded-lg shadow-sm" style="border-color:#E2E8F0;">
+            <i data-lucide="briefcase" class="w-4 h-4 text-slate-400"></i>
+            <span class="text-sm font-medium" style="color:#0F172A;">Design Dept</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TODAY'S WORKSPACE HERO & KPI CARDS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Hero Card (Today's Booking) -->
+        <div class="lg:col-span-1 card relative overflow-hidden" style="background: linear-gradient(145deg, #1e3a8a 0%, #2563EB 100%); color: white; border: none;">
+          <div class="absolute top-0 right-0 p-6 opacity-20 pointer-events-none">
+            <i data-lucide="monitor" class="w-32 h-32"></i>
+          </div>
+          <div class="p-6 relative z-10 flex flex-col h-full justify-between">
+            <div>
+              <div class="flex justify-between items-start mb-6">
+                <div>
+                  <span class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1 block">Today's Workspace</span>
+                  <h2 class="text-3xl font-bold">Desk A-214</h2>
+                </div>
+                <span class="px-2.5 py-1 rounded bg-blue-400/30 text-blue-50 text-xs font-semibold backdrop-blur-sm border border-blue-400/20">Checked In</span>
+              </div>
+              
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center gap-3 text-sm text-blue-50">
+                  <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                  <div><p class="text-xs text-blue-200">Time</p><p class="font-medium">09:00 AM - 05:00 PM</p></div>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-blue-50">
+                  <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i data-lucide="map-pin" class="w-4 h-4"></i></div>
+                  <div><p class="text-xs text-blue-200">Location</p><p class="font-medium">HQ Tower, Floor 2, Creative Zone</p></div>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-blue-50">
+                  <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><i data-lucide="monitor" class="w-4 h-4"></i></div>
+                  <div><p class="text-xs text-blue-200">Amenities</p><p class="font-medium">Dual Monitors, Standing Desk</p></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button class="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2.5 px-4 rounded-lg text-sm flex-1 transition-colors shadow-lg">Checkout</button>
+              <button class="bg-blue-600/30 hover:bg-blue-600/50 text-white border border-blue-400/30 font-semibold py-2.5 px-4 rounded-lg text-sm flex-1 transition-colors backdrop-blur-sm">View Map</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6 KPI Cards Grid -->
+        <div class="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i></div>
+            <div><p class="text-2xl font-bold text-slate-900">4</p><p class="text-xs text-slate-500 font-medium">Upcoming Bookings</p></div>
+          </div>
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center mb-3"><i data-lucide="laptop" class="w-5 h-5 text-teal-600"></i></div>
+            <div><p class="text-2xl font-bold text-slate-900">3</p><p class="text-xs text-slate-500 font-medium">Assigned Assets</p></div>
+          </div>
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-3"><i data-lucide="wrench" class="w-5 h-5 text-amber-500"></i></div>
+            <div><p class="text-2xl font-bold text-slate-900">1</p><p class="text-xs text-slate-500 font-medium">Open Request</p></div>
+          </div>
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center mb-3"><i data-lucide="clock" class="w-5 h-5 text-purple-600"></i></div>
+            <div><p class="text-2xl font-bold text-slate-900">28h</p><p class="text-xs text-slate-500 font-medium">Booked This Week</p></div>
+          </div>
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-3"><i data-lucide="heart" class="w-5 h-5 text-red-500"></i></div>
+            <div><p class="text-lg font-bold text-slate-900 truncate">Desk A-214</p><p class="text-xs text-slate-500 font-medium">Top Favorite</p></div>
+          </div>
+          <div class="card hover-card p-4 flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mb-3"><i data-lucide="users" class="w-5 h-5 text-green-600"></i></div>
+            <div><p class="text-2xl font-bold text-slate-900">8</p><p class="text-xs text-slate-500 font-medium">Teammates In-Office</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <h3 class="text-sm font-semibold mb-3" style="color:#0F172A;">Quick Actions</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="quick-action-card" onclick="window.location.href='book_workspace.html'">
+          <div class="action-icon-bg bg-blue-50"><i data-lucide="mouse-pointer-click" class="w-5 h-5 text-blue-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">Book Desk</p>
+        </div>
+        <div class="quick-action-card" onclick="window.location.href='book_workspace.html'">
+          <div class="action-icon-bg bg-indigo-50"><i data-lucide="users" class="w-5 h-5 text-indigo-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">Book Room</p>
+        </div>
+        <div class="quick-action-card" onclick="window.location.href='floor_plan.html'">
+          <div class="action-icon-bg bg-teal-50"><i data-lucide="map" class="w-5 h-5 text-teal-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">Find Team</p>
+        </div>
+        <div class="quick-action-card" onclick="window.location.href='assets.html'">
+          <div class="action-icon-bg bg-amber-50"><i data-lucide="package-plus" class="w-5 h-5 text-amber-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">Request Asset</p>
+        </div>
+        <div class="quick-action-card" onclick="window.location.href='maintenance.html'">
+          <div class="action-icon-bg bg-red-50"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">Report Issue</p>
+        </div>
+        <div class="quick-action-card" onclick="window.location.href='bookings.html'">
+          <div class="action-icon-bg bg-slate-100"><i data-lucide="history" class="w-5 h-5 text-slate-600"></i></div>
+          <p class="text-sm font-semibold text-slate-900">History</p>
+        </div>
+      </div>
+
+      <!-- MAIN 2-COL LAYOUT (70 / 30) -->
+      <div class="flex flex-col lg:flex-row gap-6">
+        
+        <!-- LEFT COLUMN (70%) -->
+        <div class="flex flex-col gap-6 lg:w-[70%]">
+          
+          <!-- My Bookings Table -->
+          <div class="card">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-900">Upcoming Bookings</h3>
+              <a href="bookings.html" class="text-xs font-semibold text-blue-600 hover:underline">View All</a>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full data-table">
+                <thead>
+                  <tr>
+                    <th class="text-left">Workspace</th>
+                    <th class="text-left">Location</th>
+                    <th class="text-left">Date & Time</th>
+                    <th class="text-left">Status</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-medium text-slate-900 flex items-center gap-2"><div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center"><i data-lucide="monitor" class="w-4 h-4 text-blue-600"></i></div> Desk B-110</td>
+                    <td><div class="text-sm">HQ Tower</div><div class="text-xs text-slate-500">Floor 2, Quiet Zone</div></td>
+                    <td><div class="text-sm font-medium">Tomorrow</div><div class="text-xs text-slate-500">09:00 AM - 05:00 PM</div></td>
+                    <td><span class="badge badge-success">Confirmed</span></td>
+                    <td class="text-right"><button class="btn-secondary py-1.5 px-3 text-xs">Modify</button></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium text-slate-900 flex items-center gap-2"><div class="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center"><i data-lucide="users" class="w-4 h-4 text-indigo-600"></i></div> Meeting Room C</td>
+                    <td><div class="text-sm">Innovation Hub</div><div class="text-xs text-slate-500">Floor 1</div></td>
+                    <td><div class="text-sm font-medium">Aug 02, 2026</div><div class="text-xs text-slate-500">10:00 AM - 11:30 AM</div></td>
+                    <td><span class="badge badge-success">Confirmed</span></td>
+                    <td class="text-right"><button class="btn-secondary py-1.5 px-3 text-xs">Modify</button></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium text-slate-900 flex items-center gap-2"><div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center"><i data-lucide="monitor" class="w-4 h-4 text-blue-600"></i></div> Desk A-05</td>
+                    <td><div class="text-sm">HQ Tower</div><div class="text-xs text-slate-500">Floor 1, Sales Zone</div></td>
+                    <td><div class="text-sm font-medium">Aug 05, 2026</div><div class="text-xs text-slate-500">13:00 PM - 17:00 PM</div></td>
+                    <td><span class="badge badge-warning">Pending</span></td>
+                    <td class="text-right"><button class="btn-secondary py-1.5 px-3 text-xs">Modify</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Empty State (Hidden) -->
+            <div class="hidden p-8 text-center flex-col items-center justify-center">
+              <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3"><i data-lucide="calendar" class="w-8 h-8 text-slate-300"></i></div>
+              <h4 class="text-sm font-bold text-slate-900 mb-1">No Upcoming Bookings</h4>
+              <p class="text-xs text-slate-500 mb-4">You have no reserved spaces right now.</p>
+              <button class="btn-primary">Book Workspace</button>
+            </div>
+          </div>
+
+          <!-- My Assets (Cards Row) -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-slate-900">My Assigned Assets</h3>
+              <a href="assets.html" class="text-xs font-semibold text-blue-600 hover:underline">Manage Assets</a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors bg-slate-50/50">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm"><i data-lucide="laptop" class="w-5 h-5 text-slate-700"></i></div>
+                  <span class="badge badge-success">Good</span>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 truncate">MacBook Pro 16"</h4>
+                <p class="text-xs text-slate-500 mb-3">AST-MBP-2024-89</p>
+                <div class="text-xs flex justify-between border-t border-slate-200 pt-3">
+                  <span class="text-slate-500">Assigned</span>
+                  <span class="font-medium text-slate-900">Jan 10, 2026</span>
+                </div>
+              </div>
+              <div class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors bg-slate-50/50">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm"><i data-lucide="monitor" class="w-5 h-5 text-slate-700"></i></div>
+                  <span class="badge badge-success">Good</span>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 truncate">Dell UltraSharp 27"</h4>
+                <p class="text-xs text-slate-500 mb-3">AST-MON-2023-44</p>
+                <div class="text-xs flex justify-between border-t border-slate-200 pt-3">
+                  <span class="text-slate-500">Assigned</span>
+                  <span class="font-medium text-slate-900">Jan 10, 2026</span>
+                </div>
+              </div>
+              <div class="border border-slate-200 rounded-xl p-4 hover:border-amber-300 transition-colors bg-amber-50/30">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-sm"><i data-lucide="headphones" class="w-5 h-5 text-slate-700"></i></div>
+                  <span class="badge badge-warning">Needs Repair</span>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 truncate">Jabra Evolve 75</h4>
+                <p class="text-xs text-slate-500 mb-3">AST-AUD-2024-12</p>
+                <div class="text-xs flex justify-between border-t border-slate-200 pt-3">
+                  <span class="text-slate-500">Ticket</span>
+                  <a href="#" class="font-medium text-blue-600 hover:underline">TKT-8992</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- This Week's Bookings (Line Chart) -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-1">Hours Booked This Week</h3>
+              <p class="text-xs text-slate-500 mb-4">You have booked 28 hours total.</p>
+              <div style="height:200px; position:relative;"><canvas id="chart-hours"></canvas></div>
+            </div>
+            <!-- Favorite Workspaces -->
+            <div class="card p-5">
+              <h3 class="text-sm font-bold text-slate-900 mb-4">Favorite Workspaces</h3>
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center"><i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-100"></i></div>
+                    <div><p class="text-sm font-bold text-slate-900">Desk A-214</p><p class="text-xs text-slate-500">Used 42 times</p></div>
+                  </div>
+                  <button class="btn-secondary text-xs py-1.5 px-3">Book Again</button>
+                </div>
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><i data-lucide="monitor" class="w-4 h-4 text-slate-500"></i></div>
+                    <div><p class="text-sm font-bold text-slate-900">Desk B-110</p><p class="text-xs text-slate-500">Used 18 times</p></div>
+                  </div>
+                  <button class="btn-secondary text-xs py-1.5 px-3">Book Again</button>
+                </div>
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center"><i data-lucide="users" class="w-4 h-4 text-indigo-500"></i></div>
+                    <div><p class="text-sm font-bold text-slate-900">Meeting Room C</p><p class="text-xs text-slate-500">Used 12 times</p></div>
+                  </div>
+                  <button class="btn-secondary text-xs py-1.5 px-3">Book Again</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (30%) -->
+        <div class="flex flex-col gap-6 lg:w-[30%]">
+          
+          <!-- AI Smart Desk Recommendation -->
+          <div class="card overflow-hidden" style="border:1px solid #BFDBFE;">
+            <div class="p-4 flex items-center gap-2 border-b" style="background:#EFF6FF; border-color:#DBEAFE;">
+              <i data-lucide="sparkles" class="w-4 h-4 text-blue-600 fill-blue-600"></i>
+              <h3 class="text-sm font-bold text-blue-900">AI Smart Recommendation</h3>
+            </div>
+            <div class="p-5 bg-white">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Suggested For Tomorrow</span>
+                <span class="badge" style="background:#DCFCE7; color:#166534;"><i data-lucide="zap" class="w-3 h-3"></i> 96% Match</span>
+              </div>
+              <h4 class="text-2xl font-bold text-slate-900 mb-1">Desk A-215</h4>
+              <p class="text-xs text-slate-500 mb-4">HQ Tower, Floor 2, Creative Zone</p>
+              
+              <div class="space-y-2 mb-5">
+                <div class="flex items-start gap-2 text-sm text-slate-700">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                  <span>Next to your frequent collaborator <strong>Mark T.</strong></span>
+                </div>
+                <div class="flex items-start gap-2 text-sm text-slate-700">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                  <span>Has dual monitors (your preference)</span>
+                </div>
+                <div class="flex items-start gap-2 text-sm text-slate-700">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                  <span>Quiet zone predicted low noise</span>
+                </div>
+              </div>
+              
+              <div class="flex gap-2">
+                <button class="btn-primary flex-1 justify-center">Book Now</button>
+                <button class="btn-secondary px-3"><i data-lucide="map" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Today -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-slate-900">Team In Office Today</h3>
+              <span class="badge badge-neutral">8 Online</span>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=11" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">Mark T.</p><p class="text-[11px] text-slate-500">Desk A-216</p></div>
+                </div>
+                <button class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"><i data-lucide="map-pin" class="w-4 h-4"></i></button>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=12" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">Elena G.</p><p class="text-[11px] text-slate-500">Desk A-190</p></div>
+                </div>
+                <button class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"><i data-lucide="map-pin" class="w-4 h-4"></i></button>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <img src="https://i.pravatar.cc/150?img=15" class="w-8 h-8 rounded-full object-cover" />
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-amber-500 border-2 border-white rounded-full"></span>
+                  </div>
+                  <div><p class="text-sm font-semibold text-slate-900">David P.</p><p class="text-[11px] text-slate-500">Meeting Rm B</p></div>
+                </div>
+                <button class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"><i data-lucide="map-pin" class="w-4 h-4"></i></button>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 border border-slate-200">+5</div>
+                  <div><p class="text-sm font-semibold text-slate-900">Others</p><p class="text-[11px] text-slate-500">Various floors</p></div>
+                </div>
+                <button class="text-blue-600 text-xs font-semibold hover:underline">View All</button>
+              </div>
+            </div>
+            <button class="btn-secondary w-full justify-center mt-4">Find Team on Map</button>
+          </div>
+
+          <!-- Today's Schedule -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">Today's Schedule</h3>
+            <div class="flex flex-col gap-3">
+              <div class="flex gap-3 items-start">
+                <div class="text-xs font-bold text-slate-400 w-10 mt-0.5">09:00</div>
+                <div class="flex-1 bg-blue-50 border border-blue-100 rounded-lg p-2.5 border-l-2 border-l-blue-500">
+                  <p class="text-xs font-bold text-blue-900">Desk Booking Starts</p>
+                  <p class="text-[10px] text-blue-700 mt-1">Desk A-214 • HQ Tower</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <div class="text-xs font-bold text-slate-400 w-10 mt-0.5">11:00</div>
+                <div class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5 border-l-2 border-l-slate-400">
+                  <p class="text-xs font-bold text-slate-900">Design Sync</p>
+                  <p class="text-[10px] text-slate-500 mt-1">Meeting Rm C</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <div class="text-xs font-bold text-slate-400 w-10 mt-0.5">14:00</div>
+                <div class="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg p-2.5 border-l-2 border-l-indigo-500">
+                  <p class="text-xs font-bold text-indigo-900">Project Review</p>
+                  <p class="text-[10px] text-indigo-700 mt-1">Online</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="card p-5">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">Recent Notifications</h3>
+            <div class="flex flex-col gap-4">
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-4 h-4 text-green-600"></i></div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900 leading-tight">Booking Approved</p>
+                  <p class="text-xs text-slate-500 mt-0.5">Your booking for Desk B-110 tomorrow is confirmed.</p>
+                  <p class="text-[10px] text-slate-400 mt-1">2 hours ago</p>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0"><i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i></div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900 leading-tight">Asset Due Tomorrow</p>
+                  <p class="text-xs text-slate-500 mt-0.5">Loaner Laptop (AST-099) is due for return.</p>
+                  <p class="text-[10px] text-slate-400 mt-1">5 hours ago</p>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><i data-lucide="wrench" class="w-4 h-4 text-blue-600"></i></div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900 leading-tight">Maintenance Updated</p>
+                  <p class="text-xs text-slate-500 mt-0.5">Ticket #8992 status changed to "In Progress".</p>
+                  <p class="text-[10px] text-slate-400 mt-1">Yesterday</p>
+                </div>
+              </div>
+            </div>
+            <button class="w-full text-center text-xs font-semibold text-blue-600 mt-4 hover:underline">View All Notifications</button>
+          </div>
+
+        </div>
+      </div>
+      
+    </div>
+  </main>
+</div>
+
+<!-- AI ASSISTANT FLOATING BUTTON -->
+<div class="ai-fab" onclick="document.getElementById('ai-panel').classList.toggle('hidden')">
+  <i data-lucide="sparkles" class="w-6 h-6"></i>
+  <div class="ai-fab-badge">1</div>
+</div>
+
+<!-- AI PANEL (HIDDEN BY DEFAULT) -->
+<div id="ai-panel" class="hidden fixed bottom-24 right-6 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col" style="height: 480px;">
+  <div class="p-4 bg-gradient-to-r from-blue-600 to-teal-500 text-white flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <i data-lucide="bot" class="w-5 h-5"></i>
+      <span class="font-bold text-sm">FacilityOps AI</span>
+    </div>
+    <button onclick="document.getElementById('ai-panel').classList.add('hidden')" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+  </div>
+  <div class="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3">
+    <div class="bg-blue-100/50 text-blue-900 text-sm p-3 rounded-lg rounded-tl-none self-start max-w-[85%] border border-blue-200/50">
+      Hi Sarah! 👋 I noticed you're checking into Desk A-214 today. I can help you find your team, request assets, or book spaces.
+    </div>
+    <div class="mt-4">
+      <p class="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Suggested Actions</p>
+      <div class="flex flex-col gap-2">
+        <button class="text-left text-xs bg-white border border-slate-200 p-2.5 rounded-lg hover:border-blue-300 hover:text-blue-700 transition-colors shadow-sm">Find me a quiet desk for tomorrow</button>
+        <button class="text-left text-xs bg-white border border-slate-200 p-2.5 rounded-lg hover:border-blue-300 hover:text-blue-700 transition-colors shadow-sm">Book a desk near Mark T.</button>
+        <button class="text-left text-xs bg-white border border-slate-200 p-2.5 rounded-lg hover:border-blue-300 hover:text-blue-700 transition-colors shadow-sm">Show available meeting rooms</button>
+        <button class="text-left text-xs bg-white border border-slate-200 p-2.5 rounded-lg hover:border-blue-300 hover:text-blue-700 transition-colors shadow-sm">Where is my manager sitting?</button>
+      </div>
+    </div>
+  </div>
+  <div class="p-3 border-t border-slate-200 bg-white">
+    <div class="relative">
+      <input type="text" placeholder="Ask anything..." class="w-full bg-slate-100 border-none rounded-full py-2.5 pl-4 pr-10 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+      <button class="absolute right-2 top-1.5 p-1 text-blue-600 hover:bg-blue-50 rounded-full"><i data-lucide="send" class="w-4 h-4"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  
+  // Date format
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('today-date-str').textContent = new Date().toLocaleDateString('en-US', options);
+
+  // Chart setup
+  const ctx = document.getElementById('chart-hours').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      datasets: [{
+        label: 'Hours Booked',
+        data: [8, 4, 8, 8, 0],
+        backgroundColor: '#2563EB',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 11 } } },
+        y: { grid: { color: '#F1F5F9' }, ticks: { color: '#94A3B8', font: { size: 11 } }, min: 0, max: 10 }
+      }
+    }
+  });
+</script>
+
+<script>
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const btn = document.getElementById('avatar-btn');
+    const menu = document.getElementById('avatar-menu');
+    if (btn && menu && !btn.contains(event.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+
+</body>
+</html>
