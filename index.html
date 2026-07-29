@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FacilityOps AI — Employee Dashboard</title>
-  <meta name="description" content="FacilityOps AI Employee Dashboard — Plan your workday, reserve workspaces, manage assets and stay productive." />
+  <title>FacilityOps AI — Customer Dashboard</title>
+  <meta name="description" content="FacilityOps AI Customer Dashboard — Discover, book, and manage your commercial workspace rentals." />
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -146,22 +146,23 @@
     </div>
     <div class="sidebar-logo-text flex flex-col leading-tight">
       <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
-      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Customer</span>
     </div>
   </a>
 
-  <!-- Nav -->
+    <!-- Nav -->
   <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
     <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
     <a href="index.html" class="nav-item active"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
-    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
-    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Discover</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="search" class="w-4 h-4"></i><span class="nav-label">Browse Workspaces</span></a>
     <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
-    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Activity</span>
     <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
     <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
     <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
-    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="assets.html" class="nav-item"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Rentals</span></a>
+    <a href="payments.html" class="nav-item"><i data-lucide="credit-card" class="w-4 h-4"></i><span class="nav-label">My Payments</span></a>
     <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
     <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
     <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
@@ -240,7 +241,7 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
           <h2 class="text-2xl font-bold mb-1" style="color:#0F172A;">Welcome back, Sarah 👋</h2>
-          <p class="text-sm" style="color:#64748B;">Plan your workday, reserve workspaces, manage assets and stay productive.</p>
+          <p class="text-sm" style="color:#64748B;">Discover, book, and manage your commercial workspace rentals.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-2 px-3 py-1.5 bg-white border rounded-lg shadow-sm" style="border-color:#E2E8F0;">
@@ -307,23 +308,23 @@
           </div>
           <div class="card hover-card p-4 flex flex-col justify-between">
             <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center mb-3"><i data-lucide="laptop" class="w-5 h-5 text-teal-600"></i></div>
-            <div><p class="text-2xl font-bold text-slate-900">3</p><p class="text-xs text-slate-500 font-medium">Assigned Assets</p></div>
+            <div><p class="text-2xl font-bold text-slate-900">3</p><p class="text-xs text-slate-500 font-medium">Total Bookings</p></div>
           </div>
           <div class="card hover-card p-4 flex flex-col justify-between">
             <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-3"><i data-lucide="wrench" class="w-5 h-5 text-amber-500"></i></div>
-            <div><p class="text-2xl font-bold text-slate-900">1</p><p class="text-xs text-slate-500 font-medium">Open Request</p></div>
+            <div><p class="text-2xl font-bold text-slate-900">1</p><p class="text-xs text-slate-500 font-medium">Pending Payments</p></div>
           </div>
           <div class="card hover-card p-4 flex flex-col justify-between">
             <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center mb-3"><i data-lucide="clock" class="w-5 h-5 text-purple-600"></i></div>
-            <div><p class="text-2xl font-bold text-slate-900">28h</p><p class="text-xs text-slate-500 font-medium">Booked This Week</p></div>
+            <div><p class="text-2xl font-bold text-slate-900">28h</p><p class="text-xs text-slate-500 font-medium">Recent Transactions</p></div>
           </div>
           <div class="card hover-card p-4 flex flex-col justify-between">
             <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-3"><i data-lucide="heart" class="w-5 h-5 text-red-500"></i></div>
-            <div><p class="text-lg font-bold text-slate-900 truncate">Desk A-214</p><p class="text-xs text-slate-500 font-medium">Top Favorite</p></div>
+            <div><p class="text-lg font-bold text-slate-900 truncate">Desk A-214</p><p class="text-xs text-slate-500 font-medium">Favorite Workspace</p></div>
           </div>
           <div class="card hover-card p-4 flex flex-col justify-between">
             <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mb-3"><i data-lucide="users" class="w-5 h-5 text-green-600"></i></div>
-            <div><p class="text-2xl font-bold text-slate-900">8</p><p class="text-xs text-slate-500 font-medium">Teammates In-Office</p></div>
+            <div><p class="text-2xl font-bold text-slate-900">8</p><p class="text-xs text-slate-500 font-medium">AI Recommended Workspace</p></div>
           </div>
         </div>
       </div>
@@ -333,19 +334,19 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div class="quick-action-card" onclick="window.location.href='book_workspace.html'">
           <div class="action-icon-bg bg-blue-50"><i data-lucide="mouse-pointer-click" class="w-5 h-5 text-blue-600"></i></div>
-          <p class="text-sm font-semibold text-slate-900">Book Desk</p>
+          <p class="text-sm font-semibold text-slate-900">Browse Workspaces</p>
         </div>
         <div class="quick-action-card" onclick="window.location.href='book_workspace.html'">
           <div class="action-icon-bg bg-indigo-50"><i data-lucide="users" class="w-5 h-5 text-indigo-600"></i></div>
-          <p class="text-sm font-semibold text-slate-900">Book Room</p>
+          <p class="text-sm font-semibold text-slate-900">Team Booking</p>
         </div>
         <div class="quick-action-card" onclick="window.location.href='floor_plan.html'">
           <div class="action-icon-bg bg-teal-50"><i data-lucide="map" class="w-5 h-5 text-teal-600"></i></div>
-          <p class="text-sm font-semibold text-slate-900">Find Team</p>
+          <p class="text-sm font-semibold text-slate-900">AI Assistant</p>
         </div>
         <div class="quick-action-card" onclick="window.location.href='assets.html'">
           <div class="action-icon-bg bg-amber-50"><i data-lucide="package-plus" class="w-5 h-5 text-amber-600"></i></div>
-          <p class="text-sm font-semibold text-slate-900">Request Asset</p>
+          <p class="text-sm font-semibold text-slate-900">My Rentals</p>
         </div>
         <div class="quick-action-card" onclick="window.location.href='maintenance.html'">
           <div class="action-icon-bg bg-red-50"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i></div>
@@ -417,8 +418,8 @@
           <!-- My Assets (Cards Row) -->
           <div class="card p-5">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-sm font-bold text-slate-900">My Assigned Assets</h3>
-              <a href="assets.html" class="text-xs font-semibold text-blue-600 hover:underline">Manage Assets</a>
+              <h3 class="text-sm font-bold text-slate-900">My Total Bookings</h3>
+              <a href="assets.html" class="text-xs font-semibold text-blue-600 hover:underline">Manage Rentals</a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors bg-slate-50/50">
@@ -427,7 +428,7 @@
                   <span class="badge badge-success">Good</span>
                 </div>
                 <h4 class="text-sm font-bold text-slate-900 truncate">MacBook Pro 16"</h4>
-                <p class="text-xs text-slate-500 mb-3">AST-MBP-2024-89</p>
+                <p class="text-xs text-slate-500 mb-3">$45.00/mo</p>
                 <div class="text-xs flex justify-between border-t border-slate-200 pt-3">
                   <span class="text-slate-500">Assigned</span>
                   <span class="font-medium text-slate-900">Jan 10, 2026</span>
@@ -439,7 +440,7 @@
                   <span class="badge badge-success">Good</span>
                 </div>
                 <h4 class="text-sm font-bold text-slate-900 truncate">Dell UltraSharp 27"</h4>
-                <p class="text-xs text-slate-500 mb-3">AST-MON-2023-44</p>
+                <p class="text-xs text-slate-500 mb-3">$15.00/mo</p>
                 <div class="text-xs flex justify-between border-t border-slate-200 pt-3">
                   <span class="text-slate-500">Assigned</span>
                   <span class="font-medium text-slate-900">Jan 10, 2026</span>
@@ -464,7 +465,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- This Week's Bookings (Line Chart) -->
             <div class="card p-5">
-              <h3 class="text-sm font-bold text-slate-900 mb-1">Hours Booked This Week</h3>
+              <h3 class="text-sm font-bold text-slate-900 mb-1">Hours Recent Transactions</h3>
               <p class="text-xs text-slate-500 mb-4">You have booked 28 hours total.</p>
               <div style="height:200px; position:relative;"><canvas id="chart-hours"></canvas></div>
             </div>
@@ -583,7 +584,7 @@
                 <button class="text-blue-600 text-xs font-semibold hover:underline">View All</button>
               </div>
             </div>
-            <button class="btn-secondary w-full justify-center mt-4">Find Team on Map</button>
+            <button class="btn-secondary w-full justify-center mt-4">AI Assistant on Map</button>
           </div>
 
           <!-- Today's Schedule -->
@@ -704,7 +705,7 @@
     data: {
       labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
       datasets: [{
-        label: 'Hours Booked',
+        label: 'Booking Activity',
         data: [8, 4, 8, 8, 0],
         backgroundColor: '#2563EB',
         borderRadius: 4

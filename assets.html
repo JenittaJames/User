@@ -125,22 +125,23 @@
     </div>
     <div class="sidebar-logo-text flex flex-col leading-tight">
       <span class="font-bold text-sm" style="color:#0F172A; letter-spacing:-.3px;">FacilityOps AI</span>
-      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Employee</span>
+      <span class="sidebar-logo-badge text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5" style="background:#F1F5F9; color:#475569; width:fit-content;">Customer</span>
     </div>
   </a>
 
-  <!-- Nav -->
+    <!-- Nav -->
   <div class="flex flex-col flex-1 py-3 px-3 gap-0.5 overflow-y-auto">
     <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Overview</span>
     <a href="index.html" class="nav-item"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="nav-label">Dashboard</span></a>
-    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Workspace</span>
-    <a href="book_workspace.html" class="nav-item"><i data-lucide="calendar-plus" class="w-4 h-4"></i><span class="nav-label">Book Workspace</span></a>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Discover</span>
+    <a href="book_workspace.html" class="nav-item"><i data-lucide="search" class="w-4 h-4"></i><span class="nav-label">Browse Workspaces</span></a>
     <a href="floor_plan.html" class="nav-item"><i data-lucide="map" class="w-4 h-4"></i><span class="nav-label">Interactive Floor Plan</span></a>
-    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Items</span>
+    <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">My Activity</span>
     <a href="bookings.html" class="nav-item"><i data-lucide="calendar-check" class="w-4 h-4"></i><span class="nav-label">My Bookings</span></a>
     <a href="team_booking.html" class="nav-item"><i data-lucide="users" class="w-4 h-4"></i><span class="nav-label">Team Booking</span></a>
     <a href="ai_assistant.html" class="nav-item"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="nav-label">AI Workspace Assistant</span></a>
-    <a href="assets.html" class="nav-item active"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Assets</span></a>
+    <a href="assets.html" class="nav-item active"><i data-lucide="laptop" class="w-4 h-4"></i><span class="nav-label">My Rentals</span></a>
+    <a href="payments.html" class="nav-item"><i data-lucide="credit-card" class="w-4 h-4"></i><span class="nav-label">My Payments</span></a>
     <a href="maintenance.html" class="nav-item"><i data-lucide="wrench" class="w-4 h-4"></i><span class="nav-label">My Maintenance Requests</span></a>
     <span class="nav-section-label text-xs font-semibold px-2 pt-3 pb-1" style="color:#94A3B8; letter-spacing:.08em; text-transform:uppercase;">Account</span>
     <a href="profile.html" class="nav-item"><i data-lucide="user-circle" class="w-4 h-4"></i><span class="nav-label">Profile</span></a>
@@ -316,7 +317,7 @@
                   <div class="p-4 flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-1">
                       <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Laptop</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Monitor</span>
                         <h3 class="text-base font-bold text-slate-900 mt-0.5">MacBook Pro 14"</h3>
                       </div>
                       <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded">AST-10492</span>
@@ -567,7 +568,7 @@
     <div>
       <div class="flex justify-between items-start mb-2">
         <div>
-          <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Laptop</span>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Monitor</span>
           <h2 class="text-xl font-bold text-slate-900 mt-0.5">MacBook Pro 14"</h2>
         </div>
         <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded">AST-10492</span>
@@ -645,7 +646,7 @@
     
     <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
       <div>
-        <h2 class="text-lg font-bold text-slate-900">Request New Asset</h2>
+        <h2 class="text-lg font-bold text-slate-900">Rent Asset</h2>
         <p class="text-xs text-slate-500">Submit a request for workplace equipment</p>
       </div>
       <button class="p-2 hover:bg-slate-200 rounded-lg transition-colors" onclick="closeModal('request-asset-modal')"><i data-lucide="x" class="w-4 h-4 text-slate-500"></i></button>
@@ -694,7 +695,7 @@
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
           <i data-lucide="keyboard" class="w-8 h-8 text-slate-400 mb-2"></i>
-          <p class="font-bold text-slate-900 text-sm">Peripherals</p>
+          <p class="font-bold text-slate-900 text-sm">Whiteboard</p>
           <p class="text-[10px] text-slate-500 mt-1">Keyboard & Mouse</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
